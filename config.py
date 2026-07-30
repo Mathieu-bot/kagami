@@ -8,7 +8,10 @@ from sqlalchemy import create_engine, text
 
 def get_engine():
     """Return a SQLAlchemy engine connected to NeonDB."""
-    url = st.secrets.get("neon_url") or os.environ.get("NEON_URL")
+    try:
+        url = st.secrets.get("neon_url") or os.environ.get("NEON_URL")
+    except Exception:
+        url = os.environ.get("NEON_URL")
     if not url:
         st.error("❌ NeonDB URL not found. Set NEON_URL or .streamlit/secrets.toml")
         st.stop()

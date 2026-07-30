@@ -6,6 +6,28 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 import pytest
 import pandas as pd
+import configparser
+
+
+def _load_neon_url():
+    """Read neon_url from .streamlit/secrets.toml or env variable."""
+    # Try environment variable first
+    url = os.environ.get("NEON_URL")
+    if url:
+        return url
+    # Try secrets file
+    secrets_path = os.path.join(os.path.dirname(__file__), "..", "..", ".streamlit", "secrets.toml")
+    if os.path.exists(secrets_path):
+        with open(secrets_path) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("neon_url"):
+                    # Extract value between quotes
+                    url = line.split("=", 1)[1].strip().strip('"')
+                    if url:
+                        os.environ["NEON_URL"] = url
+                        return url
+    return None
 
 
 @pytest.mark.integration
@@ -22,6 +44,9 @@ class TestNeonDBConnection:
     @pytest.fixture(autouse=True)
     def check_connection(self):
         """Skip if we can't connect to NeonDB."""
+        url = _load_neon_url()
+        if not url:
+            pytest.skip("NeonDB URL not configured — skipping integration tests")
         try:
             from config import get_engine
             engine = get_engine()
@@ -29,8 +54,8 @@ class TestNeonDBConnection:
                 conn.execute(
                     "SELECT 1"
                 )
-        except Exception:
-            pytest.skip("NeonDB not available — skipping integration tests")
+        except Exception as e:
+            pytest.skip(f"NeonDB not available — {e}")
 
     def test_connection_succeeds(self):
         """Should connect and run a simple query."""
