@@ -1,16 +1,21 @@
-"""Authentication and role management via Caddy OAuth headers."""
+"""Authentication and role management via Caddy Basic Auth / OAuth."""
 
 import streamlit as st
-from config import query
+import base64
 
-# Role hierarchy for page access
+# Role mapping
+USER_ROLES = {
+    "admin": "admin",
+    "analyst": "analyst",
+    "viewer": "viewer",
+}
+
 ROLE_HIERARCHY = {
     "viewer": 0,
     "analyst": 1,
     "admin": 2,
 }
 
-# Page access rules: {page_key: min_role}
 PAGE_ACCESS = {
     "hq_overview": "viewer",
     "city_drilldown": "viewer",
@@ -26,68 +31,54 @@ PAGE_LABELS = {
 }
 
 
-def get_user_info() -> dict:
-    """Extract user info from Caddy OAuth headers or simulate for dev."""
-    user_email = st.query_params.get("X-User-Email", [None])
-    user_name = st.query_params.get("X-User-Name", [None])
-    user_role = st.query_params.get("X-User-Role", [None])
-
-    # Extract from request headers (when behind Caddy)
+def get_authenticated_user() -> str:
+    """Extract username from basic auth or OAuth headers."""
+    # Try OAuth headers first (from Caddy forward_auth)
     try:
-        headers = st.context.headers if hasattr(st, 'context') else {}
-        user_email = headers.get("X-User-Email", user_email)
-        user_name = headers.get("X-User-Name", user_name)
-        user_role = headers.get("X-User-Role", user_role)
+        headers = st.context.headers
+        user_email = headers.get("x-user-email", "")
+        if user_email and "@" in user_email:
+            return headers.get("x-user-role", "viewer"), user_email
     except Exception:
         pass
 
-    return {
-        "email": user_email or "dev@local",
-        "name": user_name or "Developer",
-        "role": user_role or "admin",  # Default to admin in dev
-    }
-
-
-def get_user_role(email: str) -> str:
-    """Fetch user role from NeonDB users table."""
+    # Fallback to basic auth
     try:
-        df = query("SELECT role FROM users WHERE email = :email", {"email": email})
-        if not df.empty:
-            return df["role"].iloc[0]
+        headers = st.context.headers
+        auth = headers.get("authorization", "")
+        if auth.startswith("Basic "):
+            decoded = base64.b64decode(auth[6:]).decode()
+            username = decoded.split(":")[0]
+            return username, f"{username}@kagami.mg"
     except Exception:
         pass
-    return "viewer"  # Default role
+
+    return "viewer", "viewer@kagami.mg"
 
 
-def check_page_access(page_key: str, role: str) -> bool:
-    """Check if a role has access to a specific page."""
-    required_role = PAGE_ACCESS.get(page_key, "admin")
-    required_level = ROLE_HIERARCHY.get(required_role, 99)
-    user_level = ROLE_HIERARCHY.get(role, -1)
-    return user_level >= required_level
+def init_session_state():
+    """Initialize session with user info from auth headers."""
+    if "authenticated" not in st.session_state:
+        username, email = get_authenticated_user()
+        role = USER_ROLES.get(username, "viewer")
+        st.session_state["authenticated"] = True
+        st.session_state["username"] = username
+        st.session_state["email"] = email
+        st.session_state["name"] = username.capitalize()
+        st.session_state["role"] = role
+        st.session_state["page"] = "hq_overview"
 
 
 def get_available_pages(role: str) -> list:
-    """Return list of page keys accessible to this role."""
+    """Return pages accessible to the given role."""
     return [
         key for key, required in PAGE_ACCESS.items()
         if ROLE_HIERARCHY.get(role, -1) >= ROLE_HIERARCHY.get(required, 99)
     ]
 
 
-def init_session_state():
-    """Initialize session state with user info."""
-    if "authenticated" not in st.session_state:
-        user = get_user_info()
-        st.session_state["authenticated"] = True
-        st.session_state["email"] = user["email"]
-        st.session_state["name"] = user["name"]
-        st.session_state["role"] = get_user_role(user["email"])
-        st.session_state["page"] = "hq_overview"
-
-
 def require_role(min_role: str):
-    """Decorator-style check — stop if user role is insufficient."""
+    """Stop execution if user role is insufficient."""
     user_role = st.session_state.get("role", "viewer")
     if ROLE_HIERARCHY.get(user_role, -1) < ROLE_HIERARCHY.get(min_role, 99):
         st.error(f"⛔ Access denied — {min_role} role or higher required.")

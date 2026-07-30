@@ -5,7 +5,7 @@ Roles: viewer (default), analyst, admin.
 """
 
 import streamlit as st
-from auth import init_session_state, get_available_pages, PAGE_LABELS, PAGE_ACCESS
+from auth import init_session_state, get_available_pages, PAGE_LABELS, require_role
 from queries import list_cities
 
 # ─── Page config (must be first) ───
