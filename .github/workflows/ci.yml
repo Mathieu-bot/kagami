@@ -1,4 +1,4 @@
-name: CI — Tests
+name: CI + CD
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 
 jobs:
   test:
+    name: Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,3 +25,23 @@ jobs:
 
       - name: Run unit tests
         run: python3 -m pytest tests/unit/ -v --tb=line
+
+  deploy:
+    name: Deploy to VM
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/kagami
+            source /home/ubuntu/kagami-env/bin/activate
+            git pull origin main
+            pip install -q -r requirements.txt
+            sudo systemctl restart streamlit-kagami
+            echo "✅ Deployed $(git rev-parse --short HEAD)"
