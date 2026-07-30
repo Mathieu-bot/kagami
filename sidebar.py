@@ -1,8 +1,19 @@
 """Shared sidebar — brand, navigation links, and global filters for all pages."""
 
+import os
 import streamlit as st
 from auth import get_available_pages, PAGE_LABELS
 from queries import list_cities
+
+# Project root directory (where sidebar.py lives)
+_PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+
+def _page_path(page_id: str) -> str:
+    """Return an absolute path to the page file."""
+    if page_id == "hq_overview":
+        return os.path.join(_PROJECT_ROOT, "app.py")
+    return os.path.join(_PROJECT_ROOT, "pages", f"{page_id}.py")
 
 
 def render_sidebar():
@@ -18,13 +29,11 @@ def render_sidebar():
         st.caption(f"Role: **{st.session_state.get('role', 'viewer')}**")
         st.divider()
 
-        # ─── Navigation (URL-based page links) ───
+        # ─── Navigation (URL-based page links with absolute paths) ───
         st.subheader("Navigation")
         available_pages = get_available_pages(st.session_state.get("role", "viewer"))
         for pid in available_pages:
-            # HQ Overview is the home page (app.py), others live in pages/
-            path = "app.py" if pid == "hq_overview" else f"pages/{pid}.py"
-            st.page_link(path, label=PAGE_LABELS.get(pid, pid))
+            st.page_link(_page_path(pid), label=PAGE_LABELS.get(pid, pid))
 
         st.divider()
 
