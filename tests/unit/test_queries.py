@@ -34,7 +34,6 @@ class TestQueryFunctionsReturnDataFrame:
     @pytest.mark.parametrize("func_name,expected_cols", QUERY_FUNCTIONS)
     def test_function_returns_dataframe(self, func_name, expected_cols, mock_query):
         """Each query function should return a DataFrame with expected columns."""
-        from queries import period_to_interval
         import queries as q
 
         # Build a mock return matching the function's expected columns
@@ -99,6 +98,28 @@ class TestFunctionsWithCity:
             assert col in result.columns
 
 
+class TestFunctionsWithCityAndPeriod:
+    """Functions that take both city_name and period parameters."""
+
+    @pytest.mark.parametrize("func_name,period,expected_cols", [
+        ("city_hourly_profile", "30d", ["hour", "avg_aqi", "avg_pm25"]),
+        ("city_all_pollutants", "7d", ["time", "pm2_5", "pm10"]),
+    ])
+    def test_with_city_and_period(self, func_name, period, expected_cols, mock_query):
+        """Functions with city + period should work correctly."""
+        import queries as q
+
+        mock_data = {col: [f"dummy"] for col in expected_cols}
+        mock_query.return_value = pd.DataFrame(mock_data)
+
+        func = getattr(q, func_name)
+        result = func("Antananarivo", period)
+
+        assert isinstance(result, pd.DataFrame)
+        for col in expected_cols:
+            assert col in result.columns
+
+
 class TestPeriodToInterval:
     """Verify the period mapping helper."""
 
@@ -140,10 +161,6 @@ class TestHeatmapData:
         assert "hour" in df.columns
         assert "day_of_week" in df.columns
         assert "avg_aqi" in df.columns
-
-
-class TestPeriodToInterval:
-    """Verify the period mapping helper."""
 
 
 class TestAirQualityMap:

@@ -22,14 +22,12 @@ class TestGetEngine:
             rendered = engine.url.render_as_string(hide_password=False)
             assert rendered.startswith("postgresql://test:test@localhost/")
 
-    def test_engine_fails_without_url(self):
-        """get_engine() should stop when no URL is configured."""
+    def test_engine_raises_without_url(self):
+        """get_engine() should raise DatabaseError when no URL is configured."""
         with patch("config.st") as mock_st:
             mock_st.secrets = {}
-            mock_st.error.side_effect = SystemExit(1)
-            mock_st.stop.side_effect = SystemExit(1)
-            from config import get_engine
-            with pytest.raises(SystemExit):
+            from config import get_engine, DatabaseError
+            with pytest.raises(DatabaseError, match="NeonDB URL not found"):
                 get_engine()
 
 
@@ -50,13 +48,10 @@ class TestQuery:
                 assert len(result) == 3
 
     def test_query_handles_errors(self):
-        """query() should stop gracefully on error."""
+        """query() should raise DatabaseError on failure."""
         with patch("config.st") as mock_st, \
              patch("config.create_engine") as mock_engine:
-            mock_st.error.side_effect = SystemExit(1)
-            mock_st.stop.side_effect = SystemExit(1)
             mock_engine.return_value.connect.side_effect = Exception("DB down")
-            from config import query
-            with pytest.raises(SystemExit):
+            from config import query, DatabaseError
+            with pytest.raises(DatabaseError, match="Query failed"):
                 query("SELECT 1")
-            mock_st.error.assert_called_once()
