@@ -33,25 +33,25 @@ PAGE_LABELS = {
 
 def get_authenticated_user() -> str:
     """Extract username from basic auth or OAuth headers."""
-    # Try OAuth headers first (from Caddy forward_auth)
     try:
         headers = st.context.headers
-        user_email = headers.get("x-user-email", "")
-        if user_email and "@" in user_email:
-            return headers.get("x-user-role", "viewer"), user_email
     except Exception:
-        pass
+        return "viewer", "viewer@kagami.mg"
+
+    # Try OAuth headers first (from Caddy forward_auth)
+    user_email = headers.get("x-user-email", "")
+    if user_email and "@" in user_email:
+        return headers.get("x-user-role", "viewer"), user_email
 
     # Fallback to basic auth
-    try:
-        headers = st.context.headers
-        auth = headers.get("authorization", "")
-        if auth.startswith("Basic "):
+    auth = headers.get("authorization", "")
+    if auth.startswith("Basic "):
+        try:
             decoded = base64.b64decode(auth[6:]).decode()
             username = decoded.split(":")[0]
             return username, f"{username}@kagami.mg"
-    except Exception:
-        pass
+        except Exception:
+            pass
 
     return "viewer", "viewer@kagami.mg"
 
