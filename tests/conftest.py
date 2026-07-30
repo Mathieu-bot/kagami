@@ -25,6 +25,7 @@ def mock_streamlit():
         "streamlit.plotly_chart", "streamlit.expander", "streamlit.container",
         "streamlit.columns", "streamlit.sidebar", "streamlit.spinner",
         "streamlit.cache_data", "streamlit.cache_resource",
+        "streamlit.page_link", "streamlit.title",
     ]
     with ExitStack() as stack:
         for target in targets:
