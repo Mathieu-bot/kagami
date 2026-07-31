@@ -25,3 +25,7 @@ Thumbs.db
 # Logs
 *.log
 .coverage*
+
+# Local user store
+users.db
+.kagami/
