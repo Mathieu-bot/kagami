@@ -1,4 +1,4 @@
-name: CI + CD
+name: CI
 
 on:
   push:
@@ -31,30 +31,3 @@ jobs:
         env:
           NEON_URL: ${{ secrets.NEON_URL }}
         run: python3 -m pytest tests/integration/ -v --tb=line
-
-  deploy:
-    name: Deploy to VM
-    needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - name: SSH and deploy
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/kagami
-            source /home/ubuntu/kagami-env/bin/activate
-            git pull origin main
-            pip install -q -r requirements.txt
-            # Validate the Caddyfile before touching the live server
-            caddy validate --config Caddyfile --adapter caddyfile || exit 1
-            sudo cp Caddyfile /etc/caddy/Caddyfile
-            sudo systemctl restart streamlit-kagami
-            sudo systemctl reload caddy
-            # Health checks: app directly, then through Caddy (/aqi/ prefix)
-            curl -fsS http://localhost:8501/aqi/_stcore/health > /dev/null || exit 1
-            curl -fsS -o /dev/null https://kagami.tafita.online/aqi/_stcore/health || echo "⚠️ public health check failed — Caddy may still be starting"
-            echo "✅ Deployed $(git rev-parse --short HEAD)"

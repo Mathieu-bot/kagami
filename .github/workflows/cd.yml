@@ -1,0 +1,39 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to VM
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout the CI commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: SSH and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/kagami
+            source /home/ubuntu/kagami-env/bin/activate
+            git pull origin main
+            pip install -q -r requirements.txt
+            # Validate the Caddyfile before touching the live server
+            caddy validate --config Caddyfile --adapter caddyfile || exit 1
+            sudo cp Caddyfile /etc/caddy/Caddyfile
+            sudo systemctl restart streamlit-kagami
+            sudo systemctl reload caddy
+            # Health checks: app directly, then through Caddy (/aqi/ prefix)
+            curl -fsS http://localhost:8501/aqi/_stcore/health > /dev/null || exit 1
+            curl -fsS -o /dev/null https://kagami.tafita.online/aqi/_stcore/health || echo "⚠️ public health check failed — Caddy may still be starting"
+            echo "✅ Deployed $(git rev-parse --short HEAD)"
