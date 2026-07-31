@@ -6,6 +6,9 @@ on:
     types: [completed]
     branches: [main]
 
+permissions:
+  statuses: write
+
 jobs:
   deploy:
     name: Deploy to VM
@@ -47,3 +50,38 @@ jobs:
             # Health check through Caddy (/aqi/ prefix)
             curl -fsS -o /dev/null https://kagami.tafita.online/aqi/_stcore/health || echo "⚠️ public health check failed — Caddy may still be starting"
             echo "✅ Deployed $(git rev-parse --short HEAD)"
+
+      # workflow_run workflows never appear in the commit's check suite on
+      # their own. Publish a commit status so "CD / deploy" shows up on the
+      # commit (and can be used as a branch-protection gate).
+      - name: Report success to commit checks
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.workflow_run.head_sha;
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha,
+              state: 'success',
+              context: 'CD / deploy',
+              description: 'Deployed to VM',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
+
+      - name: Report failure to commit checks
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.workflow_run.head_sha;
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha,
+              state: 'failure',
+              context: 'CD / deploy',
+              description: 'Deployment to VM failed',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
