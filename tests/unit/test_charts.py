@@ -166,16 +166,16 @@ class TestAqiBadgeColor:
 
 
 class TestPipelineStatusLabel:
-    """Verify the pipeline status -> (emoji, label) helper."""
+    """Verify the pipeline status -> (icon, label) helper."""
 
     def test_known_status(self, mock_streamlit):
         from utils.charts import pipeline_status_label
-        emoji, label = pipeline_status_label("Up to date")
-        assert emoji == "🟢"
+        icon, label = pipeline_status_label("Up to date")
+        assert icon == ":material/check_circle:"
         assert label == "À jour"
 
     def test_unknown_status_falls_back(self, mock_streamlit):
         from utils.charts import pipeline_status_label
-        emoji, label = pipeline_status_label("??")
-        assert emoji == "❓"
+        icon, label = pipeline_status_label("??")
+        assert icon == ":material/help:"
         assert label == "??"
