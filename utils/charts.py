@@ -60,6 +60,15 @@ def aqi_color_map():
     return {1: "#00E400", 2: "#FFFF00", 3: "#FF7E00", 4: "#FF0000", 5: "#7E0023"}
 
 
+def aqi_badge_color(aqi_value: int) -> str:
+    """Badge color for an AQI value: green, orange (alert), or red."""
+    if aqi_value >= 4:
+        return "red"
+    if aqi_value >= 3:
+        return "orange"
+    return "green"
+
+
 def aqi_level_label(aqi_value: int, lang: str = None) -> str:
     """Return a human-readable AQI level label (language-aware).
 

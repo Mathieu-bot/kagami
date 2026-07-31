@@ -174,6 +174,7 @@ STRINGS = {
         "compare.winner": "🏆 Meilleur air : **{city}**",
         "compare.pollutant_compare": "📊 Comparaison des polluants",
         "compare.avg_this_week": "Moyenne sur 7 jours",
+        "compare.same_city": "⚠️ Choisissez deux villes différentes pour comparer.",
 
         # ── Alerts / Control room ──
         "alerts.title": "🚨 Salle de contrôle & alertes",
@@ -458,6 +459,7 @@ STRINGS = {
         "compare.winner": "🏆 Best air: **{city}**",
         "compare.pollutant_compare": "📊 Pollutant Comparison",
         "compare.avg_this_week": "7-day average",
+        "compare.same_city": "⚠️ Pick two different cities to compare.",
 
         # ── Alerts / Control room ──
         "alerts.title": "🚨 Alerts & Control Room",

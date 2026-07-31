@@ -512,6 +512,24 @@ def comparison_trend_7d():
     """)
 
 
+def comparison_pollutants(city_a: str, city_b: str):
+    """Average pollutant levels for two cities over the last 7 days (A/B mode)."""
+    return query("""
+        SELECT c.city_name,
+               ROUND(AVG(f.pm2_5)::numeric, 2) AS pm2_5,
+               ROUND(AVG(f.pm10)::numeric, 2) AS pm10,
+               ROUND(AVG(f.no2)::numeric, 2) AS no2,
+               ROUND(AVG(f.o3)::numeric, 2) AS o3
+        FROM fact_aqi f
+        JOIN dim_city c ON f.city_key = c.city_key
+        JOIN dim_date d ON f.date_key = d.date_key
+        WHERE c.city_name IN (:city_a, :city_b)
+          AND d.full_date >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY c.city_name
+        ORDER BY c.city_name
+    """, {"city_a": city_a, "city_b": city_b})
+
+
 # ─── WHO thresholds (City Drill-down) ───
 
 def city_pollutant_timeseries(city_name: str, period: str = "30d"):
@@ -534,6 +552,46 @@ def city_pollutant_timeseries(city_name: str, period: str = "30d"):
 
 
 # ─── Dashboard: Alerts History ───
+
+def control_room_status():
+    """Live status per city for the control room: latest AQI + reading time.
+
+    Returns one row per city with the most recent reading (AQI value and
+    the timestamp of that reading). Freshness is computed in the UI.
+    """
+    return query("""
+        WITH ranked AS (
+            SELECT c.city_name, f.aqi,
+                   (d.full_date || 'T' || LPAD(d.hour::text, 2, '0') || ':00:00')::timestamp
+                       AS last_record,
+                   ROW_NUMBER() OVER (PARTITION BY c.city_name
+                                      ORDER BY d.full_date DESC, d.hour DESC) AS rn
+            FROM fact_aqi f
+            JOIN dim_city c ON f.city_key = c.city_key
+            JOIN dim_date d ON f.date_key = d.date_key
+        )
+        SELECT city_name, aqi, last_record
+        FROM ranked
+        WHERE rn = 1
+        ORDER BY city_name
+    """)
+
+
+def citizen_who_exceedance():
+    """Share of readings exceeding WHO guidelines per city (last 7 days)."""
+    return query("""
+        SELECT c.city_name,
+               ROUND(COUNT(*) FILTER (
+                   WHERE f.pm2_5 > 15 OR f.pm10 > 45 OR f.no2 > 25 OR f.o3 > 100
+               ) * 100.0 / COUNT(*), 1) AS exceedance_rate
+        FROM fact_aqi f
+        JOIN dim_city c ON f.city_key = c.city_key
+        JOIN dim_date d ON f.date_key = d.date_key
+        WHERE d.full_date >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY c.city_name
+        ORDER BY c.city_name
+    """)
+
 
 def alert_episodes(days: int = 90):
     """Recent alert episodes (AQI >= 3) across cities."""

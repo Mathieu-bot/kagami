@@ -81,6 +81,16 @@ def mock_streamlit():
         # st.stop() halts the page, exactly like the real runtime.
         stack.enter_context(patch("streamlit.stop", side_effect=StopPage))
 
+        def _fragment(*args, **kwargs):
+            """Mimic @st.fragment: return the wrapped function unchanged."""
+            if args and callable(args[0]):
+                return args[0]
+            def _decorator(func):
+                return func
+            return _decorator
+
+        stack.enter_context(patch("streamlit.fragment", side_effect=_fragment))
+
         def _make_columns(n):
             """Return n context-manager column mocks."""
             count = n if isinstance(n, int) else len(n)

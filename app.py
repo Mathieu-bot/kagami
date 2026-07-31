@@ -24,6 +24,7 @@ from queries import (
     who_exceedance_rate,
     pipeline_status,
     last_ingestion,
+    comparison_current,
 )
 from utils.charts import style_plotly_chart, aqi_level_label
 from utils.exports import csv_download
@@ -43,12 +44,67 @@ render_sidebar()
 
 exports = {}
 
+def render_executive_summary(period: str = "7d"):
+    """Auto-generated executive summary: key attention points from the data."""
+    st.subheader(t("hq.exec_attention"))
+    st.caption(t("hq.exec_caption"))
+    points = []
+
+    # Best / worst city today
+    df_today = comparison_current()
+    if not df_today.empty:
+        best = df_today.iloc[-1]
+        worst = df_today.iloc[0]
+        points.append(t("hq.attention_best_city", city=best["city_name"], aqi=best["current_aqi"]))
+        points.append(t("hq.attention_worst_city", city=worst["city_name"], aqi=worst["current_aqi"]))
+
+    # Cities currently in alert
+    df_alert = cities_in_alert()
+    alert_count = int(df_alert["alert_count"].iloc[0]) if not df_alert.empty else 0
+    if alert_count > 0:
+        points.append(t("hq.attention_cities_alert", n=alert_count))
+    else:
+        points.append(t("hq.attention_no_alerts"))
+
+    # Worst pollutant vs WHO
+    df_who = worst_pollutant(period)
+    if not df_who.empty:
+        row = df_who.iloc[0]
+        points.append(t("hq.attention_worst_pollutant", pollutant=row["pollutant"], pct=row["pct"]))
+
+    # National AQI trend vs yesterday
+    df_aqi = aqi_today()
+    df_yest = aqi_yesterday()
+    if not df_aqi.empty and not df_yest.empty:
+        delta = round(df_aqi["avg_aqi"].iloc[0] - df_yest["yesterday_avg"].iloc[0], 2)
+        if delta > 0.1:
+            points.append(t("hq.attention_trend_up", delta=delta))
+        elif delta < -0.1:
+            points.append(t("hq.attention_trend_down", delta=abs(delta)))
+        else:
+            points.append(t("hq.attention_trend_flat", delta=delta))
+
+    # Data completeness gap
+    df_comp = data_completeness()
+    if not df_comp.empty:
+        comp = df_comp["completeness"].iloc[0]
+        if comp < 90:
+            points.append(t("hq.attention_gap", pct=comp))
+
+    for point in points:
+        st.markdown(f"- {point}")
+
+
 try:
     # ─── Page content ───
     st.title(t("hq.title"))
     st.caption(t("hq.caption"))
 
     period = st.session_state.get("period", "7d")
+
+    # ─── Executive summary (auto-generated) ───
+    with st.container(border=True):
+        render_executive_summary(period)
 
     # ─── Row 1: Key Metrics ───
     col1, col2, col3, col4 = st.columns(4)

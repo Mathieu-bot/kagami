@@ -18,6 +18,8 @@ QUERY_FUNCTIONS = [
     ("days_without_alert", ["days_without_alert"]),
     ("last_ingestion", ["last_record"]),
     ("pipeline_status", ["last_record", "status"]),
+    ("control_room_status", ["city_name", "aqi", "last_record"]),
+    ("citizen_who_exceedance", ["city_name", "exceedance_rate"]),
     ("list_cities", ["city_name"]),
     ("get_all_cities", ["city_key", "city_name", "latitude", "longitude"]),
     ("records_per_day", ["full_date", "records"]),
@@ -92,6 +94,23 @@ class TestFunctionsWithCity:
 
         func = getattr(q, func_name)
         result = func("Antananarivo")
+
+        assert isinstance(result, pd.DataFrame)
+        for col in expected_cols:
+            assert col in result.columns
+
+    @pytest.mark.parametrize("func_name,expected_cols", [
+        ("comparison_pollutants", ["city_name", "pm2_5", "pm10", "no2", "o3"]),
+    ])
+    def test_with_two_cities(self, func_name, expected_cols, mock_query):
+        """Functions taking two city parameters should work correctly."""
+        import queries as q
+
+        mock_data = {col: [f"dummy"] for col in expected_cols}
+        mock_query.return_value = pd.DataFrame(mock_data)
+
+        func = getattr(q, func_name)
+        result = func("Antananarivo", "Toamasina")
 
         assert isinstance(result, pd.DataFrame)
         for col in expected_cols:

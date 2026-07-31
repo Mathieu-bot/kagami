@@ -1,17 +1,21 @@
-"""Dashboard 8 — Alerts History (public).
+"""Dashboard 8 — Alerts History + Control Room (public).
 
-Past alert episodes (AQI >= 3): counts per city, worst episodes, and a
-detailed log of recent alerts.
+Live per-city status with auto-refresh (control room), plus the history
+of past alert episodes (AQI >= 3): counts per city, worst episodes, and
+a detailed log of recent alerts.
 """
+
+from datetime import datetime, timezone
 
 import streamlit as st
 import plotly.express as px
+import pandas as pd
 
 from auth import init_session_state
 from sidebar import render_sidebar
 from config import DatabaseError
-from queries import alert_episodes, alert_summary
-from utils.charts import style_plotly_chart
+from queries import alert_episodes, alert_summary, control_room_status
+from utils.charts import style_plotly_chart, aqi_badge_color
 from i18n import t, col, translate_df
 
 # ─── Page config (must be first) ───
@@ -28,7 +32,48 @@ render_sidebar()
 st.title(t("alerts.title"))
 st.caption(t("alerts.caption"))
 
+
+def _freshness_label(ts) -> str:
+    """Human-readable freshness of a reading timestamp."""
+    if ts is None or (isinstance(ts, float) and pd.isna(ts)):
+        return t("alerts.offline")
+    parsed = pd.to_datetime(ts)
+    if parsed.tzinfo is None:
+        parsed = parsed.tz_localize("UTC")
+    minutes = int((datetime.now(timezone.utc) - parsed).total_seconds() / 60)
+    if minutes < 2:
+        return t("alerts.now")
+    if minutes <= 120:
+        return t("alerts.fresh_min", m=minutes)
+    return t("alerts.offline")
+
+
+@st.fragment(run_every=30)
+def control_room():
+    """Live per-city status badges, auto-refreshed every 30 seconds."""
+    st.subheader(t("alerts.control_title"))
+    st.caption(t("alerts.control_caption"))
+    try:
+        df_live = control_room_status()
+    except DatabaseError as e:
+        st.error(t("common.db_error", msg=e))
+        return
+    if df_live.empty:
+        st.info(t("alerts.no_control_data"))
+        return
+    cols = st.columns(len(df_live))
+    for badge, (_, row) in zip(cols, df_live.iterrows()):
+        aqi = int(row["aqi"])
+        color = aqi_badge_color(aqi)
+        with badge:
+            with st.container(border=True):
+                st.markdown(f"**{row['city_name']}**")
+                st.markdown(f":{color}[**AQI {aqi}**]")
+                st.caption(_freshness_label(row["last_record"]))
+
+
 try:
+    control_room()
     days = st.selectbox(t("common.period"), [30, 90, 180, 365], index=1,
                         format_func=lambda d: t("alerts.last_days", d=d),
                         key="alerts_days")

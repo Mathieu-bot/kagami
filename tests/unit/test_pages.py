@@ -34,6 +34,8 @@ PAGES = {
         os.path.dirname(__file__), "..", "..", "pages", "forecast.py"),
     "data_explorer": os.path.join(
         os.path.dirname(__file__), "..", "..", "pages", "data_explorer.py"),
+    "citizens": os.path.join(
+        os.path.dirname(__file__), "..", "..", "pages", "citizens.py"),
 }
 
 
