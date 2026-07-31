@@ -24,6 +24,8 @@ PAGES = {
         os.path.dirname(__file__), "..", "..", "pages", "pipeline_monitor.py"),
     "user_management": os.path.join(
         os.path.dirname(__file__), "..", "..", "pages", "user_management.py"),
+    "city_comparison": os.path.join(
+        os.path.dirname(__file__), "..", "..", "pages", "city_comparison.py"),
 }
 
 
@@ -36,6 +38,7 @@ def mega_dataframe():
     """
     return pd.DataFrame({
         "city_name": ["Antananarivo", "Toamasina"],
+        "current_aqi": [1.8, 2.6],
         "avg_aqi": [1.5, 2.1],
         "yesterday_avg": [1.2, 2.0],
         "time": ["2026-07-31 08:00:00", "2026-07-31 09:00:00"],

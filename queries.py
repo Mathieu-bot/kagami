@@ -480,3 +480,33 @@ def list_cities():
 def get_all_cities():
     """Get all cities with coordinates."""
     return query("SELECT * FROM dim_city ORDER BY city_name")
+
+
+# ─── Dashboard 5: City Comparison ───
+
+def comparison_current():
+    """Current AQI per city for the inter-city comparison panel."""
+    return query("""
+        SELECT c.city_name,
+               ROUND(AVG(f.aqi)::numeric, 2) AS current_aqi
+        FROM fact_aqi f
+        JOIN dim_city c ON c.city_key = f.city_key
+        JOIN dim_date d ON f.date_key = d.date_key
+        WHERE d.full_date = CURRENT_DATE
+        GROUP BY c.city_name
+        ORDER BY current_aqi DESC
+    """)
+
+
+def comparison_trend_7d():
+    """Daily average AQI per city over the last 7 days."""
+    return query("""
+        SELECT c.city_name, d.full_date,
+               ROUND(AVG(f.aqi)::numeric, 2) AS avg_aqi
+        FROM fact_aqi f
+        JOIN dim_city c ON c.city_key = f.city_key
+        JOIN dim_date d ON f.date_key = d.date_key
+        WHERE d.full_date >= CURRENT_DATE - INTERVAL '6 days'
+        GROUP BY c.city_name, d.full_date
+        ORDER BY d.full_date, c.city_name
+    """)
