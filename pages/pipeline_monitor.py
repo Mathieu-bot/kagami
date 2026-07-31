@@ -60,7 +60,7 @@ try:
             st.caption(t("pipeline.last_ingestion_caption"))
             df_last = last_ingestion()
             if not df_last.empty:
-                st.metric(t("pipeline.last_record"), df_last["last_record"].iloc[0])
+                st.metric(t("pipeline.last_record"), str(df_last["last_record"].iloc[0]))
 
     with col3:
         with st.container(border=True):
