@@ -12,6 +12,8 @@ import importlib.util
 import pandas as pd
 import pytest
 
+from tests.conftest import StopPage
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 PAGES = {
@@ -28,6 +30,8 @@ PAGES = {
         os.path.dirname(__file__), "..", "..", "pages", "city_comparison.py"),
     "alerts_history": os.path.join(
         os.path.dirname(__file__), "..", "..", "pages", "alerts_history.py"),
+    "forecast": os.path.join(
+        os.path.dirname(__file__), "..", "..", "pages", "forecast.py"),
 }
 
 
@@ -117,7 +121,11 @@ def run_page(mock_streamlit, mock_query, mega_dataframe):
     mock_query.return_value = mega_dataframe
 
     def _run(name: str):
-        return _load_page(f"smoke_{name}", PAGES[name])
+        try:
+            return _load_page(f"smoke_{name}", PAGES[name])
+        except StopPage:
+            # Page deliberately halted (e.g. empty-data guard) — valid render.
+            return None
 
     return _run
 

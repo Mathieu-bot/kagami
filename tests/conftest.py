@@ -8,6 +8,10 @@ import pandas as pd
 from unittest.mock import patch, MagicMock
 from contextlib import ExitStack
 
+
+class StopPage(BaseException):
+    """Mimics streamlit.StopException: halts a page run without failing it."""
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # Point the local user store at a throwaway file for the whole test session.
@@ -55,7 +59,7 @@ def mock_streamlit():
     """Mock streamlit functions that would otherwise crash outside the runtime."""
     targets = [
         "streamlit.error", "streamlit.info", "streamlit.warning",
-        "streamlit.success", "streamlit.stop", "streamlit.progress",
+        "streamlit.success", "streamlit.progress",
         "streamlit.metric", "streamlit.subheader", "streamlit.markdown",
         "streamlit.caption", "streamlit.divider", "streamlit.selectbox",
         "streamlit.multiselect", "streamlit.radio", "streamlit.dataframe",
@@ -74,6 +78,8 @@ def mock_streamlit():
         stack.enter_context(patch("streamlit.button", return_value=False))
         stack.enter_context(patch("streamlit.form_submit_button", return_value=False))
         stack.enter_context(patch("streamlit.checkbox", return_value=False))
+        # st.stop() halts the page, exactly like the real runtime.
+        stack.enter_context(patch("streamlit.stop", side_effect=StopPage))
 
         def _make_columns(n):
             """Return n context-manager column mocks."""

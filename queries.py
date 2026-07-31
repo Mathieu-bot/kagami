@@ -564,3 +564,19 @@ def alert_summary(days: int = 90):
         GROUP BY c.city_name
         ORDER BY alert_count DESC
     """, {"days": days})
+
+
+# ─── Dashboard: AQI Forecast ───
+
+def city_daily_aqi(city_name: str, days: int = 60):
+    """Daily average AQI history used to train the forecast model."""
+    return query("""
+        SELECT d.full_date, ROUND(AVG(f.aqi)::numeric, 2) AS daily_avg
+        FROM fact_aqi f
+        JOIN dim_city c ON c.city_key = f.city_key
+        JOIN dim_date d ON f.date_key = d.date_key
+        WHERE c.city_name = :city_name
+          AND d.full_date >= CURRENT_DATE - (:days || ' days')::interval
+        GROUP BY d.full_date
+        ORDER BY d.full_date
+    """, {"city_name": city_name, "days": days})
