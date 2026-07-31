@@ -26,6 +26,12 @@ jobs:
       - name: Run unit tests
         run: python3 -m pytest tests/unit/ -v --tb=line
 
+      - name: Run integration tests (real NeonDB)
+        if: env.NEON_URL != ''
+        env:
+          NEON_URL: ${{ secrets.NEON_URL }}
+        run: python3 -m pytest tests/integration/ -v --tb=line
+
   deploy:
     name: Deploy to VM
     needs: test

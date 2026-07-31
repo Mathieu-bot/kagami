@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 import pytest
 import pandas as pd
 import configparser
+from sqlalchemy import text
 
 
 def _load_neon_url():
@@ -51,9 +52,7 @@ class TestNeonDBConnection:
             from config import get_engine
             engine = get_engine()
             with engine.connect() as conn:
-                conn.execute(
-                    "SELECT 1"
-                )
+                conn.execute(text("SELECT 1"))
         except Exception as e:
             pytest.skip(f"NeonDB not available — {e}")
 

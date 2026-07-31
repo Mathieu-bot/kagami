@@ -15,8 +15,14 @@ os.environ.setdefault("KAGAMI_USERS_DB", os.path.join(tempfile.mkdtemp(), "users
 
 
 @pytest.fixture(autouse=True)
-def reset_engine_cache():
-    """Reset the cached SQLAlchemy engine so tests stay isolated."""
+def reset_engine_cache(request):
+    """Reset the cached SQLAlchemy engine so unit tests stay isolated.
+
+    Integration tests reuse a single engine across the session (faster).
+    """
+    if "integration" in request.keywords:
+        yield
+        return
     import config
     config._engine = None
     yield
