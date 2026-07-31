@@ -13,6 +13,7 @@ from queries import (
     city_all_pollutants,
     city_vs_national,
     city_worst_episodes,
+    city_pollutant_timeseries,
 )
 from utils.charts import style_plotly_chart
 from utils.exports import csv_download
@@ -104,6 +105,30 @@ try:
             fig = px.line(df_poll, x="time", y=cols, title=f"All Pollutants — {city}")
             fig = style_plotly_chart(fig)
             st.plotly_chart(fig, use_container_width=True)
+
+    # ─── Pollutants vs WHO thresholds ───
+    with st.container(border=True):
+        st.subheader(f"🏭 Pollutants vs WHO Thresholds — {city}")
+        st.caption("_Dashed lines are WHO 24h air quality guidelines (µg/m³)_")
+        df_who = city_pollutant_timeseries(city, period)
+        exports["Pollutants vs WHO"] = df_who
+        if not df_who.empty:
+            fig = px.line(
+                df_who, x="full_date", y=["pm2_5", "pm10", "no2", "o3"],
+                labels={"value": "µg/m³", "full_date": "Date", "variable": "Pollutant"},
+                height=420,
+            )
+            thresholds = {"pm2_5": 15, "pm10": 45, "no2": 25, "o3": 100}
+            colors = {"pm2_5": "#D81B60", "pm10": "#8E24AA", "no2": "#F4511E", "o3": "#1E88E5"}
+            for col, thr in thresholds.items():
+                fig.add_hline(
+                    y=thr, line_dash="dash", line_color=colors[col], opacity=0.7,
+                    annotation_text=f"{col} WHO {thr}",
+                )
+            fig = style_plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No pollutant data for this period.")
 
     # ─── Row 4: Worst Episodes ───
     with st.expander("⚠️ Worst Episodes", expanded=False):
