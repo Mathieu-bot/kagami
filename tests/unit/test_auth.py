@@ -91,7 +91,7 @@ class TestGetAuthenticatedUser:
     def test_fallback_to_viewer_when_no_headers(self):
         """When no auth headers exist, default to viewer."""
         username, email = get_authenticated_user()
-        assert username in ("viewer", "admin")
+        assert username == "viewer"
         assert "@" in email
 
 
