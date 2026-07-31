@@ -26,6 +26,7 @@ from queries import (
     last_ingestion,
 )
 from utils.charts import style_plotly_chart, aqi_level_label
+from utils.exports import csv_download
 
 # ─── Page config (must be first) ───
 st.set_page_config(
@@ -38,6 +39,8 @@ st.set_page_config(
 # ─── Auth + Sidebar ───
 init_session_state()
 render_sidebar()
+
+exports = {}
 
 try:
     # ─── Page content ───
@@ -95,6 +98,7 @@ try:
         with st.container(border=True):
             st.subheader("📈 AQI Evolution")
             df_ts = aqi_evolution(period)
+            exports["AQI Evolution"] = df_ts
             if not df_ts.empty:
                 fig = px.line(df_ts, x="full_date", y=["daily_avg", "trend"],
                               labels={"value": "AQI", "variable": "Measure"})
@@ -107,6 +111,7 @@ try:
         with st.container(border=True):
             st.subheader("🗺️ Air Quality Map")
             df_map = air_quality_map()
+            exports["Air Quality Map"] = df_map
             if not df_map.empty:
                 fig = px.scatter_map(
                     df_map, lat="latitude", lon="longitude",
@@ -127,6 +132,7 @@ try:
         with st.container(border=True):
             st.subheader("📊 AQI Distribution")
             df_dist = aqi_distribution(period)
+            exports["AQI Distribution"] = df_dist
             if not df_dist.empty:
                 df_dist["level"] = df_dist["aqi"].apply(aqi_level_label)
                 colors = ["#00E400", "#FFFF00", "#FF7E00", "#FF0000", "#7E0023"]
@@ -180,5 +186,10 @@ try:
                 st.metric("Status", f"{status_emoji.get(row['status'], '❓')} {row['status']}")
             if not df_last.empty:
                 st.caption(f"Last record: {df_last['last_record'].iloc[0]}")
+
+    # ─── Exports ───
+    with st.expander("⬇️ Export data (CSV)", expanded=False):
+        for name, df in exports.items():
+            csv_download(df, name, name.lower().replace(" ", "_") + ".csv")
 except DatabaseError as e:
     st.error(f"❌ Database error: {e}")

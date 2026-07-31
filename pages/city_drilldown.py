@@ -15,6 +15,7 @@ from queries import (
     city_worst_episodes,
 )
 from utils.charts import style_plotly_chart
+from utils.exports import csv_download
 
 # ─── Page config (must be first) ───
 st.set_page_config(
@@ -29,6 +30,8 @@ render_sidebar()
 
 st.title("🏙️ City Drill-down")
 st.caption("_Detailed analysis for a specific city_")
+
+exports = {}
 
 try:
     # City selector
@@ -83,6 +86,7 @@ try:
     with st.container(border=True):
         st.subheader(f"🕐 Hourly Profile — {city}")
         df_hourly = city_hourly_profile(city, period)
+        exports["Hourly Profile"] = df_hourly
         if not df_hourly.empty:
             fig = px.bar(df_hourly, x="hour", y=["avg_aqi", "avg_pm25", "avg_o3"],
                          barmode="group",
@@ -94,6 +98,7 @@ try:
     # ─── Row 3: All Pollutants Time Series ───
     with st.expander("📈 All Pollutants — Time Series", expanded=False):
         df_poll = city_all_pollutants(city, period)
+        exports["All Pollutants"] = df_poll
         if not df_poll.empty:
             cols = ["pm2_5", "pm10", "no2", "o3", "so2", "co", "nh3"]
             fig = px.line(df_poll, x="time", y=cols, title=f"All Pollutants — {city}")
@@ -103,6 +108,7 @@ try:
     # ─── Row 4: Worst Episodes ───
     with st.expander("⚠️ Worst Episodes", expanded=False):
         df_worst = city_worst_episodes(city, period)
+        exports["Worst Episodes"] = df_worst
         if not df_worst.empty:
             styled = df_worst.style.map(
                 lambda v: "color: red; font-weight: bold" if v == "Alert"
@@ -112,5 +118,10 @@ try:
             st.dataframe(styled, use_container_width=True, hide_index=True)
         else:
             st.success("✅ No bad episodes in this period!")
+
+    # ─── Exports ───
+    with st.expander("⬇️ Export data (CSV)", expanded=False):
+        for name, df in exports.items():
+            csv_download(df, name, name.lower().replace(" ", "_") + ".csv")
 except DatabaseError as e:
     st.error(f"❌ Database error: {e}")

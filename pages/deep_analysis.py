@@ -17,6 +17,7 @@ from queries import (
     weekday_weekend,
 )
 from utils.charts import style_plotly_chart
+from utils.exports import csv_download
 
 # ─── Page config (must be first) ───
 st.set_page_config(
@@ -32,6 +33,8 @@ render_sidebar()
 st.title("🔬 Deep Analysis")
 st.caption("_EDA-compliant: statistics, outliers, correlations, multi-dimensional_")
 
+exports = {}
+
 try:
     period = st.session_state.get("period", "30d")
 
@@ -40,6 +43,7 @@ try:
         st.subheader("📦 Boxplot — AQI by Month")
         st.caption("_Outlier detection: dots beyond whiskers are unusual readings_")
         df_box = boxplot_data()
+        exports["Boxplot Data"] = df_box
         if not df_box.empty:
             fig = px.box(df_box, x="month", y="aqi", color="month",
                          title="AQI Distribution by Month", height=450)
@@ -138,6 +142,7 @@ try:
     # ─── Panel 3.2 — Monthly Statistics ───
     with st.expander("📊 Monthly Statistical Distribution", expanded=False):
         df_stats = monthly_statistics()
+        exports["Monthly Statistics"] = df_stats
         if not df_stats.empty:
             styled = df_stats.style.background_gradient(
                 subset=["avg", "median", "max", "std"], cmap="RdYlGn_r"
@@ -171,5 +176,10 @@ try:
                              labels={"value": "Average", "day_type": ""})
                 fig = style_plotly_chart(fig)
                 st.plotly_chart(fig, use_container_width=True)
+
+    # ─── Exports ───
+    with st.expander("⬇️ Export data (CSV)", expanded=False):
+        for name, df in exports.items():
+            csv_download(df, name, name.lower().replace(" ", "_") + ".csv")
 except DatabaseError as e:
     st.error(f"❌ Database error: {e}")
