@@ -14,7 +14,6 @@ from tests.conftest import StopPage
 from auth import (
     ROLE_HIERARCHY,
     PAGE_ACCESS,
-    PAGE_LABELS,
     get_available_pages,
     require_role,
     init_session_state,
@@ -57,12 +56,6 @@ class TestPageAccess:
         pages = get_available_pages("unknown")
         assert len(pages) == 0
 
-    def test_all_page_keys_have_labels(self):
-        for key in PAGE_ACCESS:
-            assert key in PAGE_LABELS, f"Missing label for {key}"
-            assert isinstance(PAGE_LABELS[key], str)
-            assert len(PAGE_LABELS[key]) > 0
-
 
 class TestRequireRole:
     """Verify the require_role guard."""
@@ -91,7 +84,6 @@ class TestInitSessionState:
         assert st.session_state["authenticated"] is False
         assert st.session_state["role"] == "viewer"
         assert st.session_state["name"] == "Guest"
-        assert st.session_state["page"] == "hq_overview"
 
     def test_existing_session_not_overwritten(self, mock_streamlit):
         st.session_state.clear()

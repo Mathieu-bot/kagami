@@ -9,6 +9,7 @@ login with the "admin" role. Users are stored in a local SQLite file
 """
 
 import json
+import secrets
 import urllib.parse
 import urllib.request
 
@@ -38,20 +39,6 @@ PAGE_ACCESS = {
     "data_explorer": "admin",
 }
 
-PAGE_LABELS = {
-    "hq_overview": "📊 HQ Overview",
-    "city_drilldown": "🏙️ City Drill-down",
-    "deep_analysis": "🔬 Deep Analysis",
-    "city_comparison": "⚖️ City Comparison",
-    "alerts_history": "🚨 Alerts History",
-    "forecast": "🔮 AQI Forecast",
-    "citizens": "🏥 Citizens & Health",
-    "pipeline_monitor": "⚙️ Pipeline Monitor",
-    "user_management": "👥 User Management",
-    "data_explorer": "🗄️ Data Explorer",
-}
-# Legacy label map kept for tests; the sidebar renders `nav.*` i18n keys instead.
-
 
 def get_available_pages(role: str) -> list:
     """Return pages accessible to the given role."""
@@ -75,12 +62,15 @@ def _google_auth_url() -> str:
     cfg = _google_oauth_config()
     if not cfg:
         return None
+    # Per-request random state prevents CSRF on the OAuth callback.
+    state = secrets.token_urlsafe(16)
+    st.session_state["oauth_state"] = state
     params = {
         "client_id": cfg["client_id"],
         "redirect_uri": cfg["redirect_uri"],
         "response_type": "code",
         "scope": "openid email profile",
-        "state": "kagami",
+        "state": state,
     }
     return "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
 
@@ -114,8 +104,15 @@ def handle_google_callback() -> bool:
         if not params.get("oauth") or str(params.get("oauth")) != "callback":
             return False
         code = params.get("code")
+        state = params.get("state")
         cfg = _google_oauth_config()
+        expected_state = st.session_state.get("oauth_state")
         if not cfg or not code:
+            return False
+        # Validate the state we stored when building the auth URL (CSRF).
+        if not expected_state or not state or not secrets.compare_digest(
+            str(state), str(expected_state)
+        ):
             return False
         email = _exchange_code(str(code), cfg)
         if email:
@@ -155,7 +152,6 @@ def init_session_state():
         st.session_state["email"] = None
         st.session_state["name"] = "Guest"
         st.session_state["role"] = "viewer"
-        st.session_state["page"] = "hq_overview"
 
 
 def _handle_password_login(username: str, password: str):
