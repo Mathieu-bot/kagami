@@ -4,7 +4,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.figure_factory as ff
 import numpy as np
-from auth import init_session_state, require_role
+from auth import init_session_state
 from sidebar import render_sidebar
 from config import DatabaseError
 from queries import (
@@ -27,7 +27,6 @@ st.set_page_config(
 )
 
 init_session_state()
-require_role("analyst")
 render_sidebar()
 
 st.title("🔬 Deep Analysis")

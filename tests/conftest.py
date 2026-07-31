@@ -2,12 +2,16 @@
 
 import os
 import sys
+import tempfile
 import pytest
 import pandas as pd
 from unittest.mock import patch, MagicMock
 from contextlib import ExitStack
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+# Point the local user store at a throwaway file for the whole test session.
+os.environ.setdefault("KAGAMI_USERS_DB", os.path.join(tempfile.mkdtemp(), "users.db"))
 
 
 @pytest.fixture(autouse=True)
@@ -17,6 +21,20 @@ def reset_engine_cache():
     config._engine = None
     yield
     config._engine = None
+
+
+@pytest.fixture
+def users_db(tmp_path):
+    """Point the user store at a fresh temp DB per test."""
+    old = os.environ.get("KAGAMI_USERS_DB")
+    os.environ["KAGAMI_USERS_DB"] = str(tmp_path / "users.db")
+    import users
+    users.init_db()
+    yield users
+    if old is None:
+        os.environ.pop("KAGAMI_USERS_DB", None)
+    else:
+        os.environ["KAGAMI_USERS_DB"] = old
 
 
 @pytest.fixture
@@ -39,19 +57,33 @@ def mock_streamlit():
         "streamlit.columns", "streamlit.sidebar", "streamlit.spinner",
         "streamlit.cache_data", "streamlit.cache_resource",
         "streamlit.page_link", "streamlit.title", "streamlit.set_page_config",
+        "streamlit.rerun", "streamlit.link_button", "streamlit.form",
+        "streamlit.text_input", "streamlit.download_button", "streamlit.date_input",
+        "streamlit.number_input", "streamlit.slider",
     ]
     with ExitStack() as stack:
         for target in targets:
             stack.enter_context(patch(target))
+        # Widgets that would trigger real actions if truthy stay False by default.
+        stack.enter_context(patch("streamlit.button", return_value=False))
+        stack.enter_context(patch("streamlit.form_submit_button", return_value=False))
+        stack.enter_context(patch("streamlit.checkbox", return_value=False))
 
         def _make_columns(n):
             """Return n context-manager column mocks."""
             count = n if isinstance(n, int) else len(n)
             return [MagicMock() for _ in range(count)]
 
+        def _make_tabs(names):
+            """Return one context-manager mock per tab."""
+            return [MagicMock() for _ in names]
+
+        stack.enter_context(patch("streamlit.columns", side_effect=_make_columns))
+        stack.enter_context(patch("streamlit.tabs", side_effect=_make_tabs))
+
         with patch("streamlit.session_state", {}), \
              patch("streamlit.context", create=True), \
-             patch("streamlit.columns", side_effect=_make_columns):
+             patch("streamlit.query_params", {}):
             yield
 
 

@@ -1,8 +1,11 @@
-"""Unit tests for the auth module — roles, permissions, session."""
+"""Unit tests for the auth module — roles, permissions, session, login."""
 
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+
+import streamlit
+import streamlit as st
 
 from auth import (
     ROLE_HIERARCHY,
@@ -11,8 +14,8 @@ from auth import (
     get_available_pages,
     require_role,
     init_session_state,
-    get_authenticated_user,
-    USER_ROLES,
+    handle_google_callback,
+    render_login_form,
 )
 
 
@@ -22,38 +25,28 @@ class TestRoleHierarchy:
     def test_viewer_is_lowest(self):
         assert ROLE_HIERARCHY["viewer"] == 0
 
-    def test_analyst_is_middle(self):
-        assert ROLE_HIERARCHY["analyst"] == 1
-
     def test_admin_is_highest(self):
-        assert ROLE_HIERARCHY["admin"] == 2
+        assert ROLE_HIERARCHY["admin"] == 1
 
     def test_hierarchy_order(self):
-        assert ROLE_HIERARCHY["viewer"] < ROLE_HIERARCHY["analyst"] < ROLE_HIERARCHY["admin"]
+        assert ROLE_HIERARCHY["viewer"] < ROLE_HIERARCHY["admin"]
 
 
 class TestPageAccess:
-    """Verify page access rules per role."""
+    """Verify page access rules per role (data public, admin gated)."""
 
-    def test_viewer_can_access_two_pages(self):
+    def test_viewer_gets_all_public_pages(self):
         pages = get_available_pages("viewer")
-        assert "hq_overview" in pages
-        assert "city_drilldown" in pages
-        assert "deep_analysis" not in pages
+        for p in ("hq_overview", "city_drilldown", "deep_analysis",
+                  "city_comparison", "alerts_history"):
+            assert p in pages
         assert "pipeline_monitor" not in pages
-        assert len(pages) == 2
+        assert "user_management" not in pages
+        assert "data_explorer" not in pages
 
-    def test_analyst_can_access_three_pages(self):
-        pages = get_available_pages("analyst")
-        assert "hq_overview" in pages
-        assert "city_drilldown" in pages
-        assert "deep_analysis" in pages
-        assert "pipeline_monitor" not in pages
-        assert len(pages) == 3
-
-    def test_admin_can_access_all_pages(self):
+    def test_admin_gets_all_pages(self):
         pages = get_available_pages("admin")
-        assert len(pages) == 4
+        assert len(pages) == len(PAGE_ACCESS)
 
     def test_unknown_role_gets_no_access(self):
         """An unrecognised role should be denied all pages."""
@@ -70,52 +63,58 @@ class TestPageAccess:
 class TestRequireRole:
     """Verify the require_role guard."""
 
-    def test_require_role_allowed(self, mock_streamlit):
-        """Should NOT call st.stop() when role is sufficient."""
-        import streamlit as st
+    def test_require_role_allowed_admin(self, mock_streamlit):
+        """Should NOT call st.stop() when the role is sufficient."""
         st.session_state["role"] = "admin"
-        require_role("viewer")  # Should not raise
+        require_role("admin")  # Should not raise
 
-    def test_require_role_denied_viewer_to_admin(self, mock_streamlit):
-        """Should call st.stop() when role is insufficient."""
-        import streamlit as st
-        import streamlit
+    def test_require_role_denied_viewer(self, mock_streamlit):
+        """Should call st.stop() and show the login form when denied."""
         st.session_state["role"] = "viewer"
         require_role("admin")
         streamlit.stop.assert_called_once()
-
-
-class TestGetAuthenticatedUser:
-    """Verify user extraction from headers."""
-
-    def test_fallback_to_viewer_when_no_headers(self):
-        """When no auth headers exist, default to viewer."""
-        username, email = get_authenticated_user()
-        assert username == "viewer"
-        assert "@" in email
+        # The login form should be shown on denial.
+        streamlit.tabs.assert_called()
 
 
 class TestInitSessionState:
-    """Verify session initialization."""
+    """Verify anonymous session initialization (public viewer)."""
 
-    def test_session_state_initialized(self, mock_streamlit):
-        """After init, session should have required keys."""
-        import streamlit as st
+    def test_anonymous_session_initialized(self, mock_streamlit):
         st.session_state.clear()
         init_session_state()
-        assert st.session_state["authenticated"] is True
-        assert "role" in st.session_state
-        assert "page" in st.session_state
+        assert st.session_state["authenticated"] is False
+        assert st.session_state["role"] == "viewer"
+        assert st.session_state["name"] == "Guest"
         assert st.session_state["page"] == "hq_overview"
 
+    def test_existing_session_not_overwritten(self, mock_streamlit):
+        st.session_state.clear()
+        st.session_state["authenticated"] = True
+        st.session_state["role"] = "admin"
+        init_session_state()
+        assert st.session_state["authenticated"] is True
+        assert st.session_state["role"] == "admin"
 
-class TestUserRoles:
-    """Verify the USER_ROLES mapping."""
 
-    def test_all_roles_exist(self):
-        assert "admin" in USER_ROLES
-        assert "analyst" in USER_ROLES
-        assert "viewer" in USER_ROLES
+class TestGoogleCallback:
+    """Verify the OAuth callback guard."""
 
-    def test_no_extra_roles(self):
-        assert len(USER_ROLES) == 3
+    def test_callback_noop_without_code(self, mock_streamlit):
+        """With no callback params, the handler should do nothing."""
+        assert handle_google_callback() is False
+
+    def test_callback_noop_without_config(self, mock_streamlit):
+        """Without google_oauth secrets, even a code should be ignored."""
+        st.query_params["oauth"] = "callback"
+        st.query_params["code"] = "abc"
+        assert handle_google_callback() is False
+
+
+class TestLoginForm:
+    """Verify the login form renders without crashing."""
+
+    def test_login_form_renders(self, mock_streamlit):
+        render_login_form()
+        # Username + password inputs rendered, and the form submitted lazily.
+        assert streamlit.text_input.call_count >= 2

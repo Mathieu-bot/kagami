@@ -2,7 +2,7 @@
 
 import os
 import streamlit as st
-from auth import get_available_pages, PAGE_LABELS
+from auth import get_available_pages, PAGE_LABELS, logout
 from config import DatabaseError
 from queries import list_cities
 
@@ -26,8 +26,13 @@ def render_sidebar():
     with st.sidebar:
         # ─── Brand ───
         st.markdown("## 🌍 Kagami")
-        st.caption(f"Signed in as **{st.session_state.get('name', 'User')}**")
-        st.caption(f"Role: **{st.session_state.get('role', 'viewer')}**")
+        if st.session_state.get("authenticated"):
+            st.caption(f"Signed in as **{st.session_state.get('name', 'User')}**")
+            st.caption(f"Role: **{st.session_state.get('role', 'viewer')}**")
+            if st.button("🚪 Sign out", key="sidebar_signout", use_container_width=True):
+                logout()
+        else:
+            st.caption("Public viewer — data is open")
         st.divider()
 
         # ─── Navigation (URL-based page links with absolute paths) ───
@@ -68,4 +73,4 @@ def render_sidebar():
         st.session_state["period"] = period
 
         st.divider()
-        st.caption("ℹ️ Managed by Google OAuth via Caddy")
+        st.caption("🌱 Public air quality data · Admin login for management")

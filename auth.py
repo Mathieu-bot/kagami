@@ -1,72 +1,50 @@
-"""Authentication and role management via Caddy Basic Auth / OAuth."""
+"""Authentication — Public + Admin model.
+
+Air quality data is public for everyone (no login required). Only the
+admin pages (pipeline monitor, user management, data explorer) require
+login with the "admin" role. Users are stored in a local SQLite file
+(users.py) with bcrypt hashed passwords. Login methods:
+  - Google OAuth (email matched against the local user store)
+  - Username & password
+"""
+
+import json
+import urllib.parse
+import urllib.request
 
 import streamlit as st
-import base64
 
-# Role mapping
-USER_ROLES = {
-    "admin": "admin",
-    "analyst": "analyst",
-    "viewer": "viewer",
-}
+from users import get_user, get_user_by_email, verify_password
 
+# Role model: everyone is a viewer (public); only admin gates pages.
 ROLE_HIERARCHY = {
     "viewer": 0,
-    "analyst": 1,
-    "admin": 2,
+    "admin": 1,
 }
 
 PAGE_ACCESS = {
+    # Public pages — open air quality data
     "hq_overview": "viewer",
     "city_drilldown": "viewer",
-    "deep_analysis": "analyst",
+    "deep_analysis": "viewer",
+    "city_comparison": "viewer",
+    "alerts_history": "viewer",
+    # Admin pages
     "pipeline_monitor": "admin",
+    "user_management": "admin",
+    "data_explorer": "admin",
 }
 
 PAGE_LABELS = {
     "hq_overview": "📊 HQ Overview",
     "city_drilldown": "🏙️ City Drill-down",
     "deep_analysis": "🔬 Deep Analysis",
+    "city_comparison": "⚖️ City Comparison",
+    "alerts_history": "🚨 Alerts History",
     "pipeline_monitor": "⚙️ Pipeline Monitor",
+    "user_management": "👥 User Management",
+    "data_explorer": "🗄️ Data Explorer",
 }
-
-
-def get_authenticated_user() -> str:
-    """Extract username from basic auth or OAuth headers."""
-    try:
-        headers = st.context.headers
-    except Exception:
-        return "viewer", "viewer@kagami.mg"
-
-    # Try OAuth headers first (from Caddy forward_auth)
-    user_email = headers.get("x-user-email", "")
-    if user_email and "@" in user_email:
-        return headers.get("x-user-role", "viewer"), user_email
-
-    # Fallback to basic auth
-    auth = headers.get("authorization", "")
-    if auth.startswith("Basic "):
-        try:
-            decoded = base64.b64decode(auth[6:]).decode()
-            username = decoded.split(":")[0]
-            return username, f"{username}@kagami.mg"
-        except Exception:
-            pass
-
-    return "viewer", "viewer@kagami.mg"
-
-
-def init_session_state():
-    """Initialize session with user info from auth headers."""
-    if "authenticated" not in st.session_state:
-        username, email = get_authenticated_user()
-        role = USER_ROLES.get(username, "viewer")
-        st.session_state["authenticated"] = True
-        st.session_state["username"] = username
-        st.session_state["email"] = email
-        st.session_state["name"] = username.capitalize()
-        st.session_state["role"] = role
-        st.session_state["page"] = "hq_overview"
 
 
 def get_available_pages(role: str) -> list:
@@ -77,10 +55,146 @@ def get_available_pages(role: str) -> list:
     ]
 
 
+def _google_oauth_config():
+    """Return the google_oauth secrets dict or None."""
+    try:
+        cfg = st.secrets["google_oauth"]
+        return cfg if cfg.get("client_id") and cfg.get("client_secret") else None
+    except Exception:
+        return None
+
+
+def _google_auth_url() -> str:
+    """Build the Google authorization URL (or None if not configured)."""
+    cfg = _google_oauth_config()
+    if not cfg:
+        return None
+    params = {
+        "client_id": cfg["client_id"],
+        "redirect_uri": cfg["redirect_uri"],
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": "kagami",
+    }
+    return "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
+
+
+def _exchange_code(code: str, cfg: dict):
+    """Exchange the authorization code for the user's email address."""
+    data = urllib.parse.urlencode({
+        "code": code,
+        "client_id": cfg["client_id"],
+        "client_secret": cfg["client_secret"],
+        "redirect_uri": cfg["redirect_uri"],
+        "grant_type": "authorization_code",
+    }).encode("utf-8")
+    req = urllib.request.Request("https://oauth2.googleapis.com/token", data=data)
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        tokens = json.loads(resp.read().decode("utf-8"))
+    access_token = tokens["access_token"]
+    req = urllib.request.Request(
+        "https://www.googleapis.com/oauth2/v2/userinfo",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        info = json.loads(resp.read().decode("utf-8"))
+    return info.get("email")
+
+
+def handle_google_callback() -> bool:
+    """Process a Google OAuth callback if one is pending in the query params."""
+    try:
+        params = st.query_params
+        if not params.get("oauth") or str(params.get("oauth")) != "callback":
+            return False
+        code = params.get("code")
+        cfg = _google_oauth_config()
+        if not cfg or not code:
+            return False
+        email = _exchange_code(str(code), cfg)
+        if email:
+            user = get_user_by_email(email)
+            if user and user["active"] and user["role"] == "admin":
+                _set_session(user)
+            else:
+                st.session_state["authenticated"] = False
+                st.session_state["email"] = email
+                st.session_state["role"] = "viewer"
+            try:
+                params.clear()
+            except Exception:
+                pass
+            return True
+    except Exception:
+        return False
+    return False
+
+
+def _set_session(user: dict):
+    """Store an authenticated session for the given user."""
+    st.session_state["authenticated"] = True
+    st.session_state["username"] = user["username"]
+    st.session_state["email"] = user["email"]
+    st.session_state["name"] = user["username"].capitalize()
+    st.session_state["role"] = user.get("role", "viewer")
+
+
+def init_session_state():
+    """Ensure session keys exist. Anonymous users are public viewers."""
+    handle_google_callback()
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
+        st.session_state["username"] = None
+        st.session_state["email"] = None
+        st.session_state["name"] = "Guest"
+        st.session_state["role"] = "viewer"
+        st.session_state["page"] = "hq_overview"
+
+
+def _handle_password_login(username: str, password: str):
+    """Validate username/password and set the session on success."""
+    user = get_user(username) if username else None
+    if user and user["active"] and verify_password(password, user["password_hash"]):
+        _set_session(user)
+        st.rerun()
+    else:
+        st.error("❌ Invalid username or password.")
+
+
+def render_login_form():
+    """Render the admin login form (Google + username/password)."""
+    st.markdown("## 🔐 Admin Login")
+    st.caption("_Sign in to access admin pages. Air quality data stays public._")
+    tab_google, tab_password = st.tabs(["Sign in with Google", "Username & Password"])
+
+    with tab_google:
+        url = _google_auth_url()
+        if url:
+            st.link_button("Sign in with Google", url)
+        else:
+            st.info("Google login is not configured yet — use Username & Password.")
+
+    with tab_password:
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Sign in", type="primary")
+            if submitted:
+                _handle_password_login(username, password)
+
+
 def require_role(min_role: str):
-    """Stop execution if user role is insufficient."""
-    user_role = st.session_state.get("role", "viewer")
-    if ROLE_HIERARCHY.get(user_role, -1) < ROLE_HIERARCHY.get(min_role, 99):
-        st.error(f"⛔ Access denied — {min_role} role or higher required.")
-        st.info(f"Your role: **{user_role}**")
-        st.stop()
+    """Stop execution if the user's role is insufficient; show login instead."""
+    role = st.session_state.get("role", "viewer")
+    if ROLE_HIERARCHY.get(role, -1) >= ROLE_HIERARCHY.get(min_role, 99):
+        return
+    st.error(f"⛔ Access denied — {min_role} role required.")
+    render_login_form()
+    st.stop()
+
+
+def logout():
+    """Clear the session and redirect to the current page."""
+    for key in ("authenticated", "username", "email", "name", "role"):
+        st.session_state.pop(key, None)
+    st.rerun()
