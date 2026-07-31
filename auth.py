@@ -29,6 +29,7 @@ PAGE_ACCESS = {
     "deep_analysis": "viewer",
     "city_comparison": "viewer",
     "alerts_history": "viewer",
+    "forecast": "viewer",
     # Admin pages
     "pipeline_monitor": "admin",
     "user_management": "admin",
@@ -41,6 +42,7 @@ PAGE_LABELS = {
     "deep_analysis": "🔬 Deep Analysis",
     "city_comparison": "⚖️ City Comparison",
     "alerts_history": "🚨 Alerts History",
+    "forecast": "🔮 AQI Forecast",
     "pipeline_monitor": "⚙️ Pipeline Monitor",
     "user_management": "👥 User Management",
     "data_explorer": "🗄️ Data Explorer",
