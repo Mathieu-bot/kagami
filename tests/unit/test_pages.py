@@ -148,3 +148,29 @@ def test_hq_overview_handles_db_error(run_page, mock_query):
     mock_query.side_effect = DatabaseError("connection refused")
     run_page("app")
     st.error.assert_called_once()
+
+
+def test_city_comparison_ab_mode_renders(run_page):
+    """C1: the A/B head-to-head branch (radio '2cities') must render.
+
+    The default smoke test only exercises the "all cities" branch because
+    the mocked radio returns a non-string value. Force the radio to
+    "2cities" AND make the column selectboxes return real city names
+    (a MagicMock would crash pandas comparisons in the page).
+    """
+    from unittest.mock import patch
+
+    class _CityCol:
+        def __init__(self, city):
+            self._city = city
+
+        def selectbox(self, *args, **kwargs):
+            return self._city
+
+        def metric(self, *args, **kwargs):
+            return None
+
+    cols = [_CityCol("Antananarivo"), _CityCol("Toamasina")]
+    with patch("streamlit.radio", return_value="2cities"), \
+         patch("streamlit.columns", return_value=cols):
+        run_page("city_comparison")  # Raises if the A/B path crashes

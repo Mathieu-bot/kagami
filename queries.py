@@ -1,9 +1,25 @@
 """All SQL queries from the Air Quality Madagascar dashboard.
 
 All queries use parameterized bind variables (:param) to prevent SQL injection.
+Aggregates are wrapped in COALESCE so that empty periods return 0 instead
+of NULL rows that render as "nan" in the UI.
 """
 
 from config import query
+
+
+def _cached_30s(func):
+    """Apply ``@st.cache_data(ttl=30)`` only inside a running Streamlit
+    runtime. Outside (unit tests) the function is returned unchanged so
+    tests keep exercising the real code path."""
+    try:
+        from streamlit import runtime
+        if runtime.exists():
+            import streamlit as st
+            return st.cache_data(ttl=30)(func)
+    except Exception:
+        pass
+    return func
 
 
 # ─── Helpers ───
@@ -25,7 +41,7 @@ def period_to_interval(period: str) -> str:
 def aqi_today():
     """Panel 1.1 — AQI average for today."""
     return query("""
-        SELECT ROUND(AVG(f.aqi)::numeric, 2) AS avg_aqi
+        SELECT COALESCE(ROUND(AVG(f.aqi)::numeric, 2), 0) AS avg_aqi
         FROM fact_aqi f
         JOIN dim_date d ON f.date_key = d.date_key
         WHERE d.full_date = CURRENT_DATE
@@ -35,7 +51,7 @@ def aqi_today():
 def aqi_yesterday():
     """Panel 1.1 — Yesterday's AQI average for comparison."""
     return query("""
-        SELECT ROUND(AVG(f.aqi)::numeric, 2) AS yesterday_avg
+        SELECT COALESCE(ROUND(AVG(f.aqi)::numeric, 2), 0) AS yesterday_avg
         FROM fact_aqi f
         JOIN dim_date d ON f.date_key = d.date_key
         WHERE d.full_date = CURRENT_DATE - INTERVAL '1 day'
@@ -71,29 +87,34 @@ def worst_pollutant(period: str = "7d"):
     interval = period_to_interval(period)
     return query("""
         WITH ratios AS (
-            SELECT 'PM2.5' AS pollutant, ROUND(AVG(f.pm2_5)::numeric, 2) AS value,
+            SELECT 'PM2.5' AS pollutant,
+                   COALESCE(ROUND(AVG(f.pm2_5)::numeric, 2), 0) AS value,
                    15.0 AS who_threshold,
-                   ROUND((AVG(f.pm2_5) / 15.0 * 100)::numeric, 1) AS pct
+                   COALESCE(ROUND((AVG(f.pm2_5) / 15.0 * 100)::numeric, 1), 0) AS pct
             FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
             WHERE d.full_date >= CURRENT_DATE - CAST(:interval AS INTERVAL)
             UNION ALL
-            SELECT 'PM10', ROUND(AVG(f.pm10)::numeric, 2), 45.0,
-                   ROUND((AVG(f.pm10) / 45.0 * 100)::numeric, 1)
+            SELECT 'PM10',
+                   COALESCE(ROUND(AVG(f.pm10)::numeric, 2), 0), 45.0,
+                   COALESCE(ROUND((AVG(f.pm10) / 45.0 * 100)::numeric, 1), 0)
             FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
             WHERE d.full_date >= CURRENT_DATE - CAST(:interval AS INTERVAL)
             UNION ALL
-            SELECT 'NO₂', ROUND(AVG(f.no2)::numeric, 2), 25.0,
-                   ROUND((AVG(f.no2) / 25.0 * 100)::numeric, 1)
+            SELECT 'NO₂',
+                   COALESCE(ROUND(AVG(f.no2)::numeric, 2), 0), 25.0,
+                   COALESCE(ROUND((AVG(f.no2) / 25.0 * 100)::numeric, 1), 0)
             FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
             WHERE d.full_date >= CURRENT_DATE - CAST(:interval AS INTERVAL)
             UNION ALL
-            SELECT 'O₃', ROUND(AVG(f.o3)::numeric, 2), 100.0,
-                   ROUND((AVG(f.o3) / 100.0 * 100)::numeric, 1)
+            SELECT 'O₃',
+                   COALESCE(ROUND(AVG(f.o3)::numeric, 2), 0), 100.0,
+                   COALESCE(ROUND((AVG(f.o3) / 100.0 * 100)::numeric, 1), 0)
             FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
             WHERE d.full_date >= CURRENT_DATE - CAST(:interval AS INTERVAL)
             UNION ALL
-            SELECT 'SO₂', ROUND(AVG(f.so2)::numeric, 2), 40.0,
-                   ROUND((AVG(f.so2) / 40.0 * 100)::numeric, 1)
+            SELECT 'SO₂',
+                   COALESCE(ROUND(AVG(f.so2)::numeric, 2), 0), 40.0,
+                   COALESCE(ROUND((AVG(f.so2) / 40.0 * 100)::numeric, 1), 0)
             FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
             WHERE d.full_date >= CURRENT_DATE - CAST(:interval AS INTERVAL)
         )
@@ -140,12 +161,12 @@ def who_exceedance_rate(period: str = "7d"):
     """Panel 1.6 — % of readings exceeding any WHO threshold."""
     interval = period_to_interval(period)
     return query("""
-        SELECT ROUND(
+        SELECT COALESCE(ROUND(
             COUNT(*) FILTER (
                 WHERE f.pm2_5 > 15 OR f.pm10 > 45 OR f.no2 > 25
                    OR f.o3 > 100 OR f.so2 > 40
-            ) * 100.0 / COUNT(*), 2
-        ) AS exceedance_rate
+            ) * 100.0 / NULLIF(COUNT(*), 0), 2
+        ), 0) AS exceedance_rate
         FROM fact_aqi f
         JOIN dim_date d ON f.date_key = d.date_key
         WHERE d.full_date >= CURRENT_DATE - CAST(:interval AS INTERVAL)
@@ -157,7 +178,8 @@ def aqi_evolution(period: str = "30d"):
     interval = period_to_interval(period)
     return query("""
         WITH daily_aqi AS (
-            SELECT d.full_date, ROUND(AVG(f.aqi)::numeric, 2) AS daily_avg
+            SELECT d.full_date,
+                   COALESCE(ROUND(AVG(f.aqi)::numeric, 2), 0) AS daily_avg
             FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
             WHERE d.full_date >= CURRENT_DATE - CAST(:interval AS INTERVAL)
             GROUP BY d.full_date
@@ -200,26 +222,32 @@ def aqi_distribution(period: str = "7d"):
 
 
 def last_ingestion():
-    """Panel 1.10 — Timestamp of the latest record."""
+    """Panel 1.10 — Timestamp of the latest record (UTC)."""
     return query("""
-        SELECT MAX(d.full_date || 'T' || LPAD(d.hour::text, 2, '0') || ':00:00') AS last_record
+        SELECT MAX((d.full_date::text || 'T' || LPAD(d.hour::text, 2, '0') || ':00:00')::timestamp AT TIME ZONE 'UTC') AS last_record
         FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
     """)
 
 
 def pipeline_status():
-    """Panel 1.10 — Pipeline health status."""
+    """Panel 1.10 — Pipeline health status.
+
+    The stored timestamps are UTC; making that explicit avoids ambiguous
+    naive-timestamp comparisons against NOW() (W1 timezone fix).
+    """
     return query("""
-        SELECT
-            MAX(d.full_date || 'T' || LPAD(d.hour::text, 2, '0') || ':00:00') AS last_record,
+        WITH latest AS (
+            SELECT MAX((d.full_date::text || 'T' || LPAD(d.hour::text, 2, '0') || ':00:00')::timestamp
+                       AT TIME ZONE 'UTC') AS last_record
+            FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
+        )
+        SELECT last_record,
             CASE
-                WHEN MAX( (d.full_date || 'T' || LPAD(d.hour::text, 2, '0') || ':00:00')::timestamp )
-                     >= NOW() - INTERVAL '2 hours' THEN 'Up to date'
-                WHEN MAX( (d.full_date || 'T' || LPAD(d.hour::text, 2, '0') || ':00:00')::timestamp )
-                     >= NOW() - INTERVAL '6 hours' THEN 'Delayed'
+                WHEN last_record >= NOW() - INTERVAL '2 hours' THEN 'Up to date'
+                WHEN last_record >= NOW() - INTERVAL '6 hours' THEN 'Delayed'
                 ELSE 'Critical'
             END AS status
-        FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
+        FROM latest
     """)
 
 
@@ -257,11 +285,11 @@ def city_hourly_profile(city_name: str, period: str = "30d"):
     interval = period_to_interval(period)
     return query("""
         SELECT d.hour,
-            ROUND(AVG(f.aqi)::numeric, 2) AS avg_aqi,
-            ROUND(AVG(f.pm2_5)::numeric, 2) AS avg_pm25,
-            ROUND(AVG(f.pm10)::numeric, 2) AS avg_pm10,
-            ROUND(AVG(f.no2)::numeric, 2) AS avg_no2,
-            ROUND(AVG(f.o3)::numeric, 2) AS avg_o3
+            COALESCE(ROUND(AVG(f.aqi)::numeric, 2), 0) AS avg_aqi,
+            COALESCE(ROUND(AVG(f.pm2_5)::numeric, 2), 0) AS avg_pm25,
+            COALESCE(ROUND(AVG(f.pm10)::numeric, 2), 0) AS avg_pm10,
+            COALESCE(ROUND(AVG(f.no2)::numeric, 2), 0) AS avg_no2,
+            COALESCE(ROUND(AVG(f.o3)::numeric, 2), 0) AS avg_o3
         FROM fact_aqi f
         JOIN dim_date d ON f.date_key = d.date_key
         JOIN dim_city c ON f.city_key = c.city_key
@@ -304,15 +332,25 @@ def city_vs_national(city_name: str):
             FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
             WHERE d.full_date >= CURRENT_DATE - INTERVAL '30 days'
         )
-        SELECT 'AQI' AS metric, city.aqi AS city_val, nat.aqi AS national_val
+        SELECT 'AQI' AS metric,
+               COALESCE(ROUND(city.aqi::numeric, 2), 0) AS city_val,
+               COALESCE(ROUND(nat.aqi::numeric, 2), 0) AS national_val
         FROM city_avg city, national_avg nat
-        UNION ALL SELECT 'PM2.5', city.pm25, nat.pm25
+        UNION ALL SELECT 'PM2.5',
+               COALESCE(ROUND(city.pm25::numeric, 2), 0),
+               COALESCE(ROUND(nat.pm25::numeric, 2), 0)
         FROM city_avg city, national_avg nat
-        UNION ALL SELECT 'PM10', city.pm10, nat.pm10
+        UNION ALL SELECT 'PM10',
+               COALESCE(ROUND(city.pm10::numeric, 2), 0),
+               COALESCE(ROUND(nat.pm10::numeric, 2), 0)
         FROM city_avg city, national_avg nat
-        UNION ALL SELECT 'NO₂', city.no2, nat.no2
+        UNION ALL SELECT 'NO₂',
+               COALESCE(ROUND(city.no2::numeric, 2), 0),
+               COALESCE(ROUND(nat.no2::numeric, 2), 0)
         FROM city_avg city, national_avg nat
-        UNION ALL SELECT 'O₃', city.o3, nat.o3
+        UNION ALL SELECT 'O₃',
+               COALESCE(ROUND(city.o3::numeric, 2), 0),
+               COALESCE(ROUND(nat.o3::numeric, 2), 0)
         FROM city_avg city, national_avg nat
     """, {"city_name": city_name})
 
@@ -343,15 +381,15 @@ def correlation_matrix(period: str = "30d"):
     interval = period_to_interval(period)
     return query("""
         SELECT
-            ROUND(CORR(f.pm2_5, f.pm10)::numeric, 3) AS "PM2.5_x_PM10",
-            ROUND(CORR(f.pm2_5, f.no2)::numeric, 3)  AS "PM2.5_x_NO2",
-            ROUND(CORR(f.pm2_5, f.o3)::numeric, 3)   AS "PM2.5_x_O3",
-            ROUND(CORR(f.pm10, f.no2)::numeric, 3)   AS "PM10_x_NO2",
-            ROUND(CORR(f.pm10, f.o3)::numeric, 3)    AS "PM10_x_O3",
-            ROUND(CORR(f.no2, f.o3)::numeric, 3)     AS "NO2_x_O3",
-            ROUND(CORR(f.aqi, f.pm2_5)::numeric, 3)  AS "AQI_x_PM25",
-            ROUND(CORR(f.aqi, f.pm10)::numeric, 3)   AS "AQI_x_PM10",
-            ROUND(CORR(f.aqi, f.o3)::numeric, 3)     AS "AQI_x_O3"
+            COALESCE(ROUND(CORR(f.pm2_5, f.pm10)::numeric, 3), 0) AS "PM2.5_x_PM10",
+            COALESCE(ROUND(CORR(f.pm2_5, f.no2)::numeric, 3), 0)  AS "PM2.5_x_NO2",
+            COALESCE(ROUND(CORR(f.pm2_5, f.o3)::numeric, 3), 0)   AS "PM2.5_x_O3",
+            COALESCE(ROUND(CORR(f.pm10, f.no2)::numeric, 3), 0)   AS "PM10_x_NO2",
+            COALESCE(ROUND(CORR(f.pm10, f.o3)::numeric, 3), 0)    AS "PM10_x_O3",
+            COALESCE(ROUND(CORR(f.no2, f.o3)::numeric, 3), 0)     AS "NO2_x_O3",
+            COALESCE(ROUND(CORR(f.aqi, f.pm2_5)::numeric, 3), 0)  AS "AQI_x_PM25",
+            COALESCE(ROUND(CORR(f.aqi, f.pm10)::numeric, 3), 0)   AS "AQI_x_PM10",
+            COALESCE(ROUND(CORR(f.aqi, f.o3)::numeric, 3), 0)     AS "AQI_x_O3"
         FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
         WHERE d.full_date >= CURRENT_DATE - CAST(:interval AS INTERVAL)
     """, {"interval": interval})
@@ -488,7 +526,7 @@ def comparison_current():
     """Current AQI per city for the inter-city comparison panel."""
     return query("""
         SELECT c.city_name,
-               ROUND(AVG(f.aqi)::numeric, 2) AS current_aqi
+               COALESCE(ROUND(AVG(f.aqi)::numeric, 2), 0) AS current_aqi
         FROM fact_aqi f
         JOIN dim_city c ON c.city_key = f.city_key
         JOIN dim_date d ON f.date_key = d.date_key
@@ -502,7 +540,7 @@ def comparison_trend_7d():
     """Daily average AQI per city over the last 7 days."""
     return query("""
         SELECT c.city_name, d.full_date,
-               ROUND(AVG(f.aqi)::numeric, 2) AS avg_aqi
+               COALESCE(ROUND(AVG(f.aqi)::numeric, 2), 0) AS avg_aqi
         FROM fact_aqi f
         JOIN dim_city c ON c.city_key = f.city_key
         JOIN dim_date d ON f.date_key = d.date_key
@@ -516,10 +554,10 @@ def comparison_pollutants(city_a: str, city_b: str):
     """Average pollutant levels for two cities over the last 7 days (A/B mode)."""
     return query("""
         SELECT c.city_name,
-               ROUND(AVG(f.pm2_5)::numeric, 2) AS pm2_5,
-               ROUND(AVG(f.pm10)::numeric, 2) AS pm10,
-               ROUND(AVG(f.no2)::numeric, 2) AS no2,
-               ROUND(AVG(f.o3)::numeric, 2) AS o3
+               COALESCE(ROUND(AVG(f.pm2_5)::numeric, 2), 0) AS pm2_5,
+               COALESCE(ROUND(AVG(f.pm10)::numeric, 2), 0) AS pm10,
+               COALESCE(ROUND(AVG(f.no2)::numeric, 2), 0) AS no2,
+               COALESCE(ROUND(AVG(f.o3)::numeric, 2), 0) AS o3
         FROM fact_aqi f
         JOIN dim_city c ON f.city_key = c.city_key
         JOIN dim_date d ON f.date_key = d.date_key
@@ -537,10 +575,10 @@ def city_pollutant_timeseries(city_name: str, period: str = "30d"):
     interval = period_to_interval(period)
     return query("""
         SELECT d.full_date,
-               ROUND(AVG(f.pm2_5)::numeric, 2) AS pm2_5,
-               ROUND(AVG(f.pm10)::numeric, 2) AS pm10,
-               ROUND(AVG(f.no2)::numeric, 2) AS no2,
-               ROUND(AVG(f.o3)::numeric, 2) AS o3
+               COALESCE(ROUND(AVG(f.pm2_5)::numeric, 2), 0) AS pm2_5,
+               COALESCE(ROUND(AVG(f.pm10)::numeric, 2), 0) AS pm10,
+               COALESCE(ROUND(AVG(f.no2)::numeric, 2), 0) AS no2,
+               COALESCE(ROUND(AVG(f.o3)::numeric, 2), 0) AS o3
         FROM fact_aqi f
         JOIN dim_city c ON c.city_key = f.city_key
         JOIN dim_date d ON f.date_key = d.date_key
@@ -553,17 +591,20 @@ def city_pollutant_timeseries(city_name: str, period: str = "30d"):
 
 # ─── Dashboard: Alerts History ───
 
+@_cached_30s
 def control_room_status():
     """Live status per city for the control room: latest AQI + reading time.
 
     Returns one row per city with the most recent reading (AQI value and
-    the timestamp of that reading). Freshness is computed in the UI.
+    the timestamp of that reading). The timestamp is returned as UTC
+    (tz-aware) so the freshness logic never compares naive datetimes.
+    Result is cached for 30s (matches the fragment auto-refresh).
     """
     return query("""
         WITH ranked AS (
             SELECT c.city_name, f.aqi,
-                   (d.full_date || 'T' || LPAD(d.hour::text, 2, '0') || ':00:00')::timestamp
-                       AS last_record,
+                   ((d.full_date::text || 'T' || LPAD(d.hour::text, 2, '0') || ':00:00')::timestamp
+                        AT TIME ZONE 'UTC') AS last_record,
                    ROW_NUMBER() OVER (PARTITION BY c.city_name
                                       ORDER BY d.full_date DESC, d.hour DESC) AS rn
             FROM fact_aqi f
@@ -578,18 +619,28 @@ def control_room_status():
 
 
 def citizen_who_exceedance():
-    """Share of readings exceeding WHO guidelines per city (last 7 days)."""
+    """Share of *days* exceeding WHO guidelines per city (last 7 days).
+
+    A day counts as exceeding when at least one hourly reading of PM2.5,
+    PM10, NO₂ or O₃ is above its WHO 24h guideline (W6 fix: percentage
+    of days, not percentage of readings).
+    """
     return query("""
-        SELECT c.city_name,
-               ROUND(COUNT(*) FILTER (
-                   WHERE f.pm2_5 > 15 OR f.pm10 > 45 OR f.no2 > 25 OR f.o3 > 100
-               ) * 100.0 / COUNT(*), 1) AS exceedance_rate
-        FROM fact_aqi f
-        JOIN dim_city c ON f.city_key = c.city_key
-        JOIN dim_date d ON f.date_key = d.date_key
-        WHERE d.full_date >= CURRENT_DATE - INTERVAL '7 days'
-        GROUP BY c.city_name
-        ORDER BY c.city_name
+        WITH daily AS (
+            SELECT c.city_name, d.full_date,
+                   BOOL_OR(f.pm2_5 > 15 OR f.pm10 > 45 OR f.no2 > 25 OR f.o3 > 100) AS exceeded
+            FROM fact_aqi f
+            JOIN dim_city c ON c.city_key = f.city_key
+            JOIN dim_date d ON f.date_key = d.date_key
+            WHERE d.full_date >= CURRENT_DATE - INTERVAL '7 days'
+            GROUP BY c.city_name, d.full_date
+        )
+        SELECT city_name,
+               ROUND(COUNT(*) FILTER (WHERE exceeded) * 100.0 / NULLIF(COUNT(*), 0), 1)
+                   AS exceedance_rate
+        FROM daily
+        GROUP BY city_name
+        ORDER BY city_name
     """)
 
 

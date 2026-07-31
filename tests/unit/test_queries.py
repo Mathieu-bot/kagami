@@ -27,6 +27,11 @@ QUERY_FUNCTIONS = [
     ("weekday_weekend", ["day_type", "avg_aqi"]),
     ("boxplot_data", ["month", "aqi"]),
     ("monthly_statistics", ["month", "median", "avg", "std"]),
+    # Newer comparison / alert / forecast queries (C1 coverage)
+    ("comparison_current", ["city_name", "current_aqi"]),
+    ("comparison_trend_7d", ["city_name", "full_date", "avg_aqi"]),
+    ("alert_episodes", ["city_name", "full_date", "hour", "aqi", "level"]),
+    ("alert_summary", ["city_name", "alert_count", "max_aqi", "affected_days"]),
 ]
 
 
@@ -84,6 +89,8 @@ class TestFunctionsWithCity:
         ("city_weekly_aqi", ["time", "aqi"]),
         ("city_vs_national", ["metric", "city_val", "national_val"]),
         ("city_worst_episodes", ["full_date", "hour", "aqi", "pm2_5", "status"]),
+        ("city_daily_aqi", ["full_date", "daily_avg"]),
+        ("city_pollutant_timeseries", ["full_date", "pm2_5", "pm10", "no2", "o3"]),
     ])
     def test_with_city(self, func_name, expected_cols, mock_query):
         """Functions with city parameter should work correctly."""

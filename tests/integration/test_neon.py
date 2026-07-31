@@ -69,6 +69,10 @@ def test_dashboard_queries_return_expected_columns():
         (q.monthly_statistics, ["month", "median", "avg", "std"]),
         (q.seasonal_analysis, ["season", "avg_aqi", "avg_pm25"]),
         (q.weekday_weekend, ["day_type", "avg_aqi"]),
+        (q.comparison_current, ["city_name", "current_aqi"]),
+        (q.comparison_trend_7d, ["city_name", "full_date", "avg_aqi"]),
+        (q.alert_episodes, ["city_name", "full_date", "hour", "aqi", "level"]),
+        (q.alert_summary, ["city_name", "alert_count", "max_aqi", "affected_days"]),
     ]
     for func, expected_cols in checks:
         df = func()
@@ -102,9 +106,28 @@ def test_city_queries_return_expected_columns():
         (q.city_worst_episodes, [city, "30d"], ["full_date", "hour", "aqi", "status"]),
         (q.city_hourly_profile, [city, "30d"], ["hour", "avg_aqi", "avg_pm25"]),
         (q.city_all_pollutants, [city, "7d"], ["time", "pm2_5", "pm10"]),
+        (q.city_daily_aqi, [city], ["full_date", "daily_avg"]),
+        (q.city_pollutant_timeseries, [city, "30d"], ["full_date", "pm2_5", "pm10", "no2", "o3"]),
     ]
     for func, args, expected_cols in checks:
         df = func(*args)
         assert not df.empty, f"{func.__name__} returned no data"
         for col in expected_cols:
             assert col in df.columns, f"{func.__name__} missing {col}"
+
+
+def test_comparison_pollutants_with_two_cities():
+    cities = q.list_cities()["city_name"].tolist()
+    assert len(cities) >= 2, "need at least 2 cities for A/B comparison"
+    df = q.comparison_pollutants(cities[0], cities[1])
+    assert not df.empty
+    for col in ("city_name", "pm2_5", "pm10", "no2", "o3"):
+        assert col in df.columns
+
+
+def test_control_room_last_record_is_timezone_aware():
+    """The W1 fix must return tz-aware UTC timestamps (no naive compare)."""
+    df = q.control_room_status()
+    assert not df.empty
+    ts = df["last_record"].iloc[0]
+    assert ts.tzinfo is not None, "last_record must be timezone-aware (UTC)"
