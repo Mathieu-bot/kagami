@@ -66,7 +66,7 @@ jobs:
               sha,
               state: 'success',
               context: 'CD / deploy',
-              description: 'Deployed to VM',
+              description: 'Deployed',
               target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
             });
 
@@ -82,6 +82,6 @@ jobs:
               sha,
               state: 'failure',
               context: 'CD / deploy',
-              description: 'Deployment to VM failed',
+              description: 'Deployment failed',
               target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
             });
