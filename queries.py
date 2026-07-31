@@ -102,9 +102,14 @@ def worst_pollutant(period: str = "7d"):
 
 
 def data_completeness():
-    """Panel 1.4 — Data completeness percentage for today."""
+    """Panel 1.4 — Data completeness percentage for today.
+
+    Expected readings = 24 hours per day × number of cities
+    (one reading per city per hour).
+    """
     return query("""
-        SELECT ROUND(COUNT(*) * 100.0 / (6 * 24), 1) AS completeness
+        SELECT ROUND(COUNT(*) * 100.0 / (24 * (SELECT COUNT(*) FROM dim_city)), 1)
+               AS completeness
         FROM fact_aqi f
         JOIN dim_date d ON f.date_key = d.date_key
         WHERE d.full_date = CURRENT_DATE
