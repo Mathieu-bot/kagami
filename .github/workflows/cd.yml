@@ -49,6 +49,8 @@ jobs:
             [ -n "$healthy" ] || { echo "❌ streamlit did not become healthy"; exit 1; }
             # Health check through Caddy (/aqi/ prefix)
             curl -fsS -o /dev/null https://kagami.tafita.online/aqi/_stcore/health || echo "⚠️ public health check failed — Caddy may still be starting"
+            # Landing page at the root must serve the app launcher
+            curl -fsS https://kagami.tafita.online/ | grep -q "Kagami" || { echo "❌ landing page did not serve"; exit 1; }
             echo "✅ Deployed $(git rev-parse --short HEAD)"
 
       # workflow_run workflows never appear in the commit's check suite on

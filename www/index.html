@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kagami — Company of Dashboards</title>
+  <style>
+    :root {
+      --primary: #1E88E5;
+      --bg: #f5f7fa;
+      --card: #ffffff;
+      --text: #1c2b36;
+      --muted: #6b7a86;
+      --border: #e3e8ee;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 56px 24px; width: 100%; flex: 1; }
+    header { text-align: center; margin-bottom: 44px; }
+    .brand { display: inline-flex; align-items: center; gap: 14px; }
+    .logo {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), #43a047);
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #fff; flex-shrink: 0;
+    }
+    h1 { font-size: 2rem; letter-spacing: .5px; line-height: 1.1; }
+    .tagline { color: var(--muted); margin-top: 4px; font-size: .98rem; }
+    h2 {
+      font-size: .95rem; color: var(--muted); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 18px;
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 24px; display: flex; flex-direction: column; gap: 12px;
+      color: inherit; text-decoration: none;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    a.card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.08);
+      border-color: var(--primary);
+    }
+    .card .icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .card.live .icon { background: rgba(30,136,229,.12); color: var(--primary); }
+    .card.soon { opacity: .62; cursor: default; }
+    .card.soon .icon { background: #eef1f5; color: #9aa7b2; }
+    .card h3 { font-size: 1.05rem; }
+    .card p { color: var(--muted); font-size: .9rem; line-height: 1.5; flex: 1; }
+    .badge {
+      display: inline-block; font-size: .72rem; font-weight: 600; letter-spacing: .4px;
+      padding: 3px 10px; border-radius: 999px; align-self: flex-start;
+    }
+    .badge.live { background: rgba(67,160,71,.12); color: #2e7d32; }
+    .badge.soon { background: #eef1f5; color: #6b7a86; }
+    footer { margin-top: 48px; text-align: center; color: var(--muted); font-size: .82rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 8h9a3 3 0 1 0-3-3"/>
+            <path d="M3 12h13a3 3 0 1 1-3 3"/>
+            <path d="M3 16h6"/>
+          </svg>
+        </span>
+        <span>
+          <h1>Kagami</h1>
+          <div class="tagline">Company of dashboards · Données ouvertes</div>
+        </span>
+      </div>
+    </header>
+
+    <h2>Applications</h2>
+    <div class="grid">
+      <a class="card live" href="/aqi/">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 8h9a3 3 0 1 0-3-3"/>
+            <path d="M3 12h13a3 3 0 1 1-3 3"/>
+            <path d="M3 16h6"/>
+          </svg>
+        </span>
+        <h3>Qualité de l'air</h3>
+        <p>Suivi en temps réel de l'AQI, alertes, prévisions et données ouvertes.</p>
+        <span class="badge live">En ligne</span>
+      </a>
+
+      <div class="card soon">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12h4l3-8 4 16 3-8h6"/>
+          </svg>
+        </span>
+        <h3>Santé</h3>
+        <p>Impact sanitaire des épisodes de pollution.</p>
+        <span class="badge soon">Bientôt</span>
+      </div>
+
+      <div class="card soon">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21s-7-5.1-7-11a7 7 0 0 1 14 0c0 5.9-7 11-7 11z"/>
+            <circle cx="12" cy="10" r="2.5"/>
+          </svg>
+        </span>
+        <h3>Stations</h3>
+        <p>Catalogue des stations de mesure et de leur état.</p>
+        <span class="badge soon">Bientôt</span>
+      </div>
+    </div>
+
+    <footer>© 2026 Kagami · Company of dashboards</footer>
+  </div>
+</body>
+</html>

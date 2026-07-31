@@ -10,10 +10,11 @@
 
 kagami.tafita.online {
 	# Google OAuth is registered against the ROOT URL
-	# (https://kagami.tafita.online/?oauth=callback). Redirect the root to
-	# /aqi/ while preserving the query string so the callback keeps working.
-	@root path /
-	redir @root /aqi/{query} 302
+	# (https://kagami.tafita.online/?oauth=callback). The root now serves
+	# the landing page, so forward the callback to the app while preserving
+	# the query string.
+	@oauth query oauth=callback
+	redir @oauth /aqi/?{query} 302
 
 	# AQI dashboard (Streamlit, baseUrlPath="aqi").
 	# The full /aqi/... path is forwarded as-is to the upstream.
@@ -23,4 +24,10 @@ kagami.tafita.online {
 
 	# Normalise /aqi → /aqi/ so the app loads correctly.
 	redir /aqi /aqi/ 308
+
+	# Landing page — list of Kagami apps (static site served from the repo).
+	handle / {
+		root * /home/ubuntu/kagami/www
+		file_server
+	}
 }
