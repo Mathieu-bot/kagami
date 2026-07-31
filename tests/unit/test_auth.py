@@ -7,6 +7,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 import streamlit
 import streamlit as st
 
+import pytest
+
+from tests.conftest import StopPage
+
 from auth import (
     ROLE_HIERARCHY,
     PAGE_ACCESS,
@@ -71,7 +75,8 @@ class TestRequireRole:
     def test_require_role_denied_viewer(self, mock_streamlit):
         """Should call st.stop() and show the login form when denied."""
         st.session_state["role"] = "viewer"
-        require_role("admin")
+        with pytest.raises(StopPage):
+            require_role("admin")
         streamlit.stop.assert_called_once()
         # The login form should be shown on denial.
         streamlit.tabs.assert_called()
