@@ -12,13 +12,15 @@ from sidebar import render_sidebar
 from config import DatabaseError
 from queries import list_cities, city_daily_aqi
 from utils.charts import style_plotly_chart
+from utils import filters
 from utils.forecast import forecast_aqi
 from i18n import t, col, translate_df
+from ui import page_icon
 
 # ─── Page config (must be first) ───
 st.set_page_config(
     page_title="Kagami — AQI Forecast",
-    page_icon="🔮",
+    page_icon=page_icon("forecast"),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -36,6 +38,7 @@ try:
         st.stop()
 
     city = st.selectbox(t("common.select_city"), cities["city_name"].tolist(), key="forecast_city")
+    horizon = filters.horizon_selector(key="forecast_horizon", default=7)
 
     history = city_daily_aqi(city, days=60)
 
@@ -43,7 +46,7 @@ try:
         st.info(t("forecast.no_history"))
         st.stop()
 
-    forecast = forecast_aqi(history, horizon=7)
+    forecast = forecast_aqi(history, horizon=horizon)
 
     if forecast.empty:
         st.info(t("forecast.no_history2"))
@@ -53,8 +56,8 @@ try:
     trend = forecast["forecast"].tolist()
     direction = trend[-1] - trend[0]
     c1, c2, c3 = st.columns(3)
-    c1.metric(t("forecast.next_7d_avg"), f"{sum(trend) / len(trend):.2f}")
-    c2.metric(t("forecast.day7"), f"{trend[-1]:.2f}")
+    c1.metric(t("forecast.next_days_avg", h=horizon), f"{sum(trend) / len(trend):.2f}")
+    c2.metric(t("forecast.day_h", h=horizon), f"{trend[-1]:.2f}")
     c3.metric(
         t("forecast.trend_metric"),
         t("forecast.improving") if direction < -0.2 else
@@ -64,7 +67,7 @@ try:
     # ─── Chart: history + forecast ───
     with st.container(border=True):
         st.subheader(t("forecast.history_forecast", city=city))
-        st.caption(t("forecast.history_forecast_caption"))
+        st.caption(t("forecast.history_forecast_caption", h=horizon))
         hist = history.copy()
         hist["full_date"] = pd.to_datetime(hist["full_date"])
         hist = hist.dropna(subset=["daily_avg"])

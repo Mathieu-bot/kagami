@@ -14,11 +14,12 @@ from sidebar import render_sidebar
 from config import DatabaseError, query
 from utils.sql_guard import is_read_only_sql, enforce_limit
 from i18n import t, translate_df
+from ui import page_icon
 
 # ─── Page config (must be first) ───
 st.set_page_config(
     page_title="Kagami — Data Explorer",
-    page_icon="🗄️",
+    page_icon=page_icon("data_explorer"),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -96,6 +97,6 @@ try:
                             key="explorer_download",
                         )
                 except DatabaseError as e:
-                    st.error(f"❌ {e}")
+                    st.error(f":material/error: {e}")
 except DatabaseError as e:
     st.error(t("common.db_error", msg=e))

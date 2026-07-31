@@ -12,14 +12,16 @@ import pandas as pd
 from auth import init_session_state
 from sidebar import render_sidebar
 from config import DatabaseError
-from queries import alert_episodes, alert_summary, control_room_status
+from queries import alert_episodes, alert_summary, control_room_status, list_cities
 from utils.charts import style_plotly_chart, render_city_badges, rename_traces, set_hover_template
+from utils import filters
 from i18n import t, col, translate_df
+from ui import page_icon
 
 # ─── Page config (must be first) ───
 st.set_page_config(
     page_title="Kagami — Alerts History",
-    page_icon="🚨",
+    page_icon=page_icon("alerts_history"),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -49,12 +51,35 @@ def control_room():
 
 try:
     control_room()
-    days = st.selectbox(t("common.period"), [30, 90, 180, 365], index=1,
-                        format_func=lambda d: t("alerts.last_days", d=d),
-                        key="alerts_days")
+
+    # ─── Local filters: days + severity + cities ───
+    with st.expander(t("common.filters"), expanded=False):
+        days = st.selectbox(t("common.period"), [30, 90, 180, 365], index=1,
+                            format_func=lambda d: t("alerts.last_days", d=d),
+                            key="alerts_days")
+        severity = st.selectbox(
+            t("alerts.severity"),
+            ["all", "Alert", "Severe"],
+            index=0,
+            key="alerts_severity",
+            format_func=lambda s: t("alerts.severity_all") if s == "all"
+            else (t("alerts.level_alert") if s == "Alert" else t("alerts.level_severe")),
+        )
+        df_city_opt = list_cities()
+        city_options = df_city_opt["city_name"].tolist() if not df_city_opt.empty else []
+        filters.cities_multiselect(city_options, key="alerts_cities")
+    selected_cities = filters.selected("alerts_cities")
 
     df_episodes = alert_episodes(days)
     df_summary = alert_summary(days)
+
+    # Apply page-local filters
+    if isinstance(severity, str) and severity != "all" and not df_episodes.empty and "level" in df_episodes.columns:
+        df_episodes = df_episodes[df_episodes["level"] == severity]
+    if selected_cities and not df_episodes.empty and "city_name" in df_episodes.columns:
+        df_episodes = df_episodes[df_episodes["city_name"].isin(selected_cities)]
+    if selected_cities and not df_summary.empty and "city_name" in df_summary.columns:
+        df_summary = df_summary[df_summary["city_name"].isin(selected_cities)]
 
     if df_episodes.empty:
         st.success(t("alerts.no_alerts"))

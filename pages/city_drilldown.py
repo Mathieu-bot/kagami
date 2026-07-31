@@ -17,12 +17,14 @@ from queries import (
 )
 from utils.charts import style_plotly_chart
 from utils.exports import csv_download
+from utils import filters
 from i18n import t, col, export_label, translate_df
+from ui import page_icon
 
 # ─── Page config (must be first) ───
 st.set_page_config(
     page_title="Kagami — City Drill-down",
-    page_icon="🏙️",
+    page_icon=page_icon("city_drilldown"),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -44,7 +46,12 @@ try:
         st.stop()
 
     city = st.selectbox(t("common.select_city"), cities, key="city_dd_city")
-    period = st.session_state.get("period", "30d")
+
+    # ─── Local filters: period + pollutants ───
+    with st.expander(t("common.filters"), expanded=False):
+        period = filters.period_selector(key="dd_period", default="30d")
+        filters.pollutants_multiselect(key="dd_pollutants")
+    selected_pollutants = filters.selected("dd_pollutants")
 
     # ─── Row 1: Current AQI + City vs National ───
     col1, col2 = st.columns(2)
@@ -110,7 +117,8 @@ try:
         df_poll = city_all_pollutants(city, period)
         exports["all_pollutants"] = df_poll
         if not df_poll.empty:
-            cols = ["pm2_5", "pm10", "no2", "o3", "so2", "co", "nh3"]
+            cols = filters.active_columns(selected_pollutants,
+                                          ["pm2_5", "pm10", "no2", "o3", "so2", "co", "nh3"])
             labels = {c: col(c) for c in cols}
             labels["time"] = col("time")
             fig = px.line(df_poll, x="time", y=cols,
@@ -125,17 +133,21 @@ try:
         df_who = city_pollutant_timeseries(city, period)
         exports["pollutants_vs_who"] = df_who
         if not df_who.empty:
+            poll_cols = filters.active_columns(
+                selected_pollutants, ["pm2_5", "pm10", "no2", "o3"])
+            labels = {"value": "µg/m³", "full_date": col("full_date"),
+                      "variable": t("common.pollutant")}
+            for c in poll_cols:
+                labels[c] = col(c)
             fig = px.line(
-                df_who, x="full_date", y=["pm2_5", "pm10", "no2", "o3"],
-                labels={"value": "µg/m³", "full_date": col("full_date"),
-                        "variable": t("common.pollutant"),
-                        "pm2_5": col("pm2_5"), "pm10": col("pm10"),
-                        "no2": col("no2"), "o3": col("o3")},
+                df_who, x="full_date", y=poll_cols,
+                labels=labels,
                 height=420,
             )
             thresholds = {"pm2_5": 15, "pm10": 45, "no2": 25, "o3": 100}
             colors = {"pm2_5": "#D81B60", "pm10": "#8E24AA", "no2": "#F4511E", "o3": "#1E88E5"}
-            for c, thr in thresholds.items():
+            for c in poll_cols:
+                thr = thresholds[c]
                 fig.add_hline(
                     y=thr, line_dash="dash", line_color=colors[c], opacity=0.7,
                     annotation_text=t("drill.who_hline", pollutant=c.upper(), threshold=thr),

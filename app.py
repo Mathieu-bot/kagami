@@ -26,6 +26,7 @@ from queries import (
     pipeline_status,
     last_ingestion,
     comparison_current,
+    list_cities,
 )
 from utils.charts import (
     style_plotly_chart,
@@ -36,12 +37,14 @@ from utils.charts import (
     pipeline_status_label,
 )
 from utils.exports import csv_download
+from utils import filters
 from i18n import t, col, export_label
+from ui import page_icon
 
 # ─── Page config (must be first) ───
 st.set_page_config(
     page_title="Kagami — Air Quality Madagascar",
-    page_icon="🌍",
+    page_icon=page_icon("hq_overview"),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -52,8 +55,11 @@ render_sidebar()
 
 exports = {}
 
-def render_executive_summary(period: str = "7d"):
-    """Auto-generated executive summary: key attention points from the data."""
+def render_executive_summary(period: str = "7d", cities: list = None):
+    """Auto-generated executive summary: key attention points from the data.
+
+    ``cities`` (optional) narrows the best/worst city pick to a subset.
+    """
     st.subheader(t("hq.exec_attention"))
     st.caption(t("hq.exec_caption"))
     points = []
@@ -62,6 +68,8 @@ def render_executive_summary(period: str = "7d"):
     df_today = comparison_current()
     if not df_today.empty:
         df_today = df_today.dropna(subset=["current_aqi"])
+        if cities and "city_name" in df_today.columns:
+            df_today = df_today[df_today["city_name"].isin(cities)]
         if not df_today.empty:
             best = df_today.loc[df_today["current_aqi"].idxmin()]
             worst = df_today.loc[df_today["current_aqi"].idxmax()]
@@ -114,11 +122,17 @@ try:
     st.title(t("hq.title"))
     st.caption(t("hq.caption"))
 
-    period = st.session_state.get("period", "7d")
+    # ─── Local filters (this page only) ───
+    with st.expander(t("common.filters"), expanded=False):
+        period = filters.period_selector(key="hq_period", default="7d")
+        df_city_opt = list_cities()
+        city_options = df_city_opt["city_name"].tolist() if not df_city_opt.empty else []
+        filters.cities_multiselect(city_options, key="hq_cities")
+    selected_cities = filters.selected("hq_cities")
 
     # ─── Executive summary (auto-generated) ───
     with st.container(border=True):
-        render_executive_summary(period)
+        render_executive_summary(period, selected_cities)
 
     # ─── Row 1: Key Metrics ───
     col1, col2, col3, col4 = st.columns(4)
@@ -196,6 +210,8 @@ try:
             st.caption(t("hq.aqi_map_caption"))
             df_map = air_quality_map()
             exports["air_quality_map"] = df_map
+            if selected_cities and not df_map.empty and "city_name" in df_map.columns:
+                df_map = df_map[df_map["city_name"].isin(selected_cities)]
             if not df_map.empty:
                 fig = px.scatter_map(
                     df_map, lat="latitude", lon="longitude",
@@ -239,7 +255,7 @@ try:
             if not df_who.empty:
                 row = df_who.iloc[0]
                 st.metric(
-                    f"⚠️ {row['pollutant']}",
+                    f":material/factory: {row['pollutant']}",
                     f"{row['value']} µg/m³",
                     delta=t("hq.pct_of_who", pct=row["pct"], thr=row["who_threshold"]),
                 )

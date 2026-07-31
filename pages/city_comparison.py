@@ -12,14 +12,15 @@ import plotly.express as px
 from auth import init_session_state
 from sidebar import render_sidebar
 from config import DatabaseError
-from queries import comparison_current, comparison_trend_7d, comparison_pollutants, list_cities
-from utils.charts import style_plotly_chart
+from queries import list_cities, comparison_current, comparison_trend_7d, comparison_pollutants
+from utils.charts import style_plotly_chart, rename_traces
 from i18n import t, col, translate_df
+from ui import page_icon
 
 # ─── Page config (must be first) ───
 st.set_page_config(
     page_title="Kagami — City Comparison",
-    page_icon="⚖️",
+    page_icon=page_icon("city_comparison"),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -73,8 +74,8 @@ try:
                 aqi_b = row_b["current_aqi"].iloc[0] if not row_b.empty else None
 
                 m1, m2 = st.columns(2)
-                m1.metric(f"🌤️ {city_a}", aqi_a)
-                m2.metric(f"🌤️ {city_b}", aqi_b)
+                m1.metric(f":material/sunny: {city_a}", aqi_a)
+                m2.metric(f":material/sunny: {city_b}", aqi_b)
                 if aqi_a is not None and aqi_b is not None and aqi_a != aqi_b:
                     winner = city_a if aqi_a < aqi_b else city_b
                     st.markdown(t("compare.winner", city=winner))

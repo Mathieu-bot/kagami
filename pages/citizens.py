@@ -12,14 +12,16 @@ import pandas as pd
 from auth import init_session_state
 from sidebar import render_sidebar
 from config import DatabaseError
-from queries import control_room_status, citizen_who_exceedance
+from queries import control_room_status, citizen_who_exceedance, list_cities
 from utils.charts import render_city_badges
+from utils import filters
 from i18n import t, col
+from ui import page_icon
 
 # ─── Page config (must be first) ───
 st.set_page_config(
     page_title="Kagami — Citizens & Health",
-    page_icon="🏥",
+    page_icon=page_icon("citizens"),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -31,6 +33,13 @@ st.title(t("citizens.title"))
 st.caption(t("citizens.caption"))
 
 try:
+    # ─── Local filter: cities ───
+    with st.expander(t("common.filters"), expanded=False):
+        df_city_opt = list_cities()
+        city_options = df_city_opt["city_name"].tolist() if not df_city_opt.empty else []
+        filters.cities_multiselect(city_options, key="citizens_cities")
+    selected_cities = filters.selected("citizens_cities")
+
     # ─── Understand the AQI ───
     with st.container(border=True):
         st.subheader(t("citizens.understand_aqi"))
@@ -75,6 +84,8 @@ try:
         st.subheader(t("citizens.realtime"))
         st.caption(t("citizens.realtime_caption"))
         df_live = control_room_status()
+        if selected_cities and not df_live.empty and "city_name" in df_live.columns:
+            df_live = df_live[df_live["city_name"].isin(selected_cities)]
         if df_live.empty:
             st.info(t("citizens.no_live_data"))
         else:
@@ -85,6 +96,8 @@ try:
         st.subheader(t("citizens.who_health"))
         st.caption(t("citizens.who_health_caption"))
         df_who = citizen_who_exceedance()
+        if selected_cities and not df_who.empty and "city_name" in df_who.columns:
+            df_who = df_who[df_who["city_name"].isin(selected_cities)]
         if not df_who.empty:
             fig = px.bar(
                 df_who, x="city_name", y="exceedance_rate",

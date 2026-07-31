@@ -17,11 +17,12 @@ from users import (
     toggle_active,
     delete_user,
 )
+from ui import page_icon
 
 # ─── Page config (must be first) ───
 st.set_page_config(
     page_title="Kagami — User Management",
-    page_icon="👥",
+    page_icon=page_icon("user_management"),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -66,16 +67,41 @@ users = list_users()
 if not users:
     st.info(t("users.none"))
 else:
-    st.dataframe(
-        [{"username": u["username"], "email": u["email"] or "-",
-          "role": _role_display(u["role"]), "active": "✅" if u["active"] else "❌",
-          "created_at": u["created_at"]} for u in users],
-        use_container_width=True,
-        hide_index=True,
-        column_config={"username": col("username"), "email": col("email"),
-                       "role": col("role"), "active": col("active"),
-                       "created_at": col("created_at")},
-    )
+    # ─── Filters: search + role + active only ───
+    with st.expander(t("common.filters"), expanded=False):
+        search = st.text_input(t("users.search"), key="um_search")
+        role_filter = st.selectbox(
+            t("users.role_filter"), ["all", "viewer", "admin"], index=0,
+            key="um_role_filter", format_func=lambda r: _role_display(r) if r != "all"
+            else t("users.role_all"),
+        )
+        active_only = st.checkbox(t("users.active_only"), key="um_active_only")
+
+    filtered = users
+    if isinstance(search, str) and search.strip():
+        needle = search.strip().lower()
+        filtered = [u for u in filtered
+                    if needle in (u["username"] or "").lower()
+                    or needle in (u["email"] or "").lower()]
+    if role_filter != "all":
+        filtered = [u for u in filtered if u["role"] == role_filter]
+    if active_only:
+        filtered = [u for u in filtered if u["active"]]
+
+    if not filtered:
+        st.info(t("users.none"))
+    else:
+        st.dataframe(
+            [{"username": u["username"], "email": u["email"] or "-",
+              "role": _role_display(u["role"]),
+              "active": ":material/check_circle:" if u["active"] else ":material/cancel:",
+              "created_at": u["created_at"]} for u in filtered],
+            use_container_width=True,
+            hide_index=True,
+            column_config={"username": col("username"), "email": col("email"),
+                           "role": col("role"), "active": col("active"),
+                           "created_at": col("created_at")},
+        )
 
     for user in users:
         with st.expander(f"{user['username']} — {_role_display(user['role'])}"):

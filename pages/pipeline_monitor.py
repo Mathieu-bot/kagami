@@ -11,14 +11,17 @@ from queries import (
     data_completeness,
     records_per_day,
     data_gaps,
+    list_cities,
 )
 from utils.charts import style_plotly_chart, pipeline_status_label
+from utils import filters
 from i18n import t, col, translate_df
+from ui import page_icon
 
 # ─── Page config (must be first) ───
 st.set_page_config(
     page_title="Kagami — Pipeline Monitor",
-    page_icon="⚙️",
+    page_icon=page_icon("pipeline_monitor"),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -31,6 +34,13 @@ st.title(t("pipeline.title"))
 st.caption(t("pipeline.caption"))
 
 try:
+    # ─── Local filter: cities (applies to the data-gaps table) ───
+    with st.expander(t("common.filters"), expanded=False):
+        df_city_opt = list_cities()
+        city_options = df_city_opt["city_name"].tolist() if not df_city_opt.empty else []
+        filters.cities_multiselect(city_options, key="pipeline_cities")
+    selected_cities = filters.selected("pipeline_cities")
+
     # ─── Row 1: Status + Last Ingestion ───
     col1, col2, col3 = st.columns(3)
 
@@ -80,6 +90,8 @@ try:
         st.subheader(t("pipeline.missing_data"))
         st.caption(t("pipeline.missing_data_caption"))
         df_gaps = data_gaps()
+        if selected_cities and not df_gaps.empty and "city_name" in df_gaps.columns:
+            df_gaps = df_gaps[df_gaps["city_name"].isin(selected_cities)]
         if not df_gaps.empty:
             missing = df_gaps[df_gaps["status"] == "Missing"]
             total = len(df_gaps)

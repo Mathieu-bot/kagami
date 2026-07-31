@@ -8,6 +8,7 @@ from auth import init_session_state
 from sidebar import render_sidebar
 from config import DatabaseError
 from queries import (
+    list_cities,
     boxplot_data,
     scatter_data,
     heatmap_data,
@@ -18,12 +19,14 @@ from queries import (
 )
 from utils.charts import style_plotly_chart
 from utils.exports import csv_download
+from utils import filters
 from i18n import t, col, export_label
+from ui import page_icon
 
 # ─── Page config (must be first) ───
 st.set_page_config(
     page_title="Kagami — Deep Analysis",
-    page_icon="🔬",
+    page_icon=page_icon("deep_analysis"),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -37,7 +40,15 @@ st.caption(t("deep.caption"))
 exports = {}
 
 try:
-    period = st.session_state.get("period", "30d")
+    # ─── Local filters: period + cities + pollutants ───
+    with st.expander(t("common.filters"), expanded=False):
+        period = filters.period_selector(key="deep_period", default="30d")
+        df_city_opt = list_cities()
+        city_options = df_city_opt["city_name"].tolist() if not df_city_opt.empty else []
+        filters.cities_multiselect(city_options, key="deep_cities")
+        filters.pollutants_multiselect(key="deep_pollutants")
+    selected_cities = filters.selected("deep_cities")
+    selected_pollutants = filters.selected("deep_pollutants")
 
     # ─── Panel 3.5 — BOXPLOT by Month ───
     with st.container(border=True):
@@ -63,6 +74,8 @@ try:
             st.subheader(t("deep.scatter"))
             st.caption(t("deep.scatter_caption"))
             df_scatter = scatter_data(period)
+            if selected_cities and not df_scatter.empty and "city_name" in df_scatter.columns:
+                df_scatter = df_scatter[df_scatter["city_name"].isin(selected_cities)]
             if not df_scatter.empty:
                 labels = {"pm2_5": "PM2.5 (µg/m³)", "aqi": "AQI",
                           "city_name": col("city_name")}
@@ -163,11 +176,14 @@ try:
             st.caption(t("deep.seasonal_caption"))
             df_season = seasonal_analysis()
             if not df_season.empty:
-                fig = px.bar(df_season, x="season", y=["avg_aqi", "avg_pm25", "avg_o3"],
+                season_cols = ["avg_aqi"] + filters.active_columns(
+                    selected_pollutants, ["avg_pm25", "avg_pm10", "avg_o3"],
+                    df=df_season)
+                fig = px.bar(df_season, x="season", y=season_cols,
                              barmode="group", title=t("deep.seasonal_title"),
                              labels={"value": col("value"), "season": "",
                                      "avg_aqi": col("avg_aqi"), "avg_pm25": col("avg_pm25"),
-                                     "avg_o3": col("avg_o3")})
+                                     "avg_pm10": col("avg_pm10"), "avg_o3": col("avg_o3")})
                 fig = style_plotly_chart(fig)
                 st.plotly_chart(fig, use_container_width=True)
 
@@ -177,7 +193,9 @@ try:
             st.caption(t("deep.weekday_weekend_caption"))
             df_we = weekday_weekend()
             if not df_we.empty:
-                fig = px.bar(df_we, x="day_type", y=["avg_aqi", "avg_pm25", "avg_no2"],
+                we_cols = ["avg_aqi"] + filters.active_columns(
+                    selected_pollutants, ["avg_pm25", "avg_no2"], df=df_we)
+                fig = px.bar(df_we, x="day_type", y=we_cols,
                              barmode="group", title=t("deep.weekday_weekend_title"),
                              labels={"value": col("value"), "day_type": "",
                                      "avg_aqi": col("avg_aqi"), "avg_pm25": col("avg_pm25"),
