@@ -36,7 +36,7 @@ class TestAqiColorMap:
 
 
 class TestAqiLevelLabel:
-    """Verify AQI level labels."""
+    """Verify AQI level labels (language-aware)."""
 
     @pytest.mark.parametrize("level,expected", [
         (1, "Good"),
@@ -45,13 +45,28 @@ class TestAqiLevelLabel:
         (4, "Very Unhealthy"),
         (5, "Hazardous"),
     ])
-    def test_label_correct(self, level, expected):
+    def test_label_english(self, level, expected):
         from utils.charts import aqi_level_label
-        assert aqi_level_label(level) == expected
+        assert aqi_level_label(level, lang="en") == expected
+
+    @pytest.mark.parametrize("level,expected", [
+        (1, "Bon"),
+        (2, "Modéré"),
+        (3, "Mauvais pour la santé"),
+        (5, "Dangereux"),
+    ])
+    def test_label_french(self, level, expected):
+        from utils.charts import aqi_level_label
+        assert aqi_level_label(level, lang="fr") == expected
+
+    def test_default_language_is_french(self):
+        from utils.charts import aqi_level_label
+        assert aqi_level_label(1) == "Bon"
 
     def test_unknown_level(self):
         from utils.charts import aqi_level_label
-        assert "6" in aqi_level_label(6)
+        assert "6" in aqi_level_label(6, lang="en")
+        assert "6" in aqi_level_label(6, lang="fr")
 
 
 class TestStylePlotlyChart:

@@ -18,6 +18,7 @@ from queries import (
 )
 from utils.charts import style_plotly_chart
 from utils.exports import csv_download
+from i18n import t, col, export_label
 
 # ─── Page config (must be first) ───
 st.set_page_config(
@@ -30,8 +31,8 @@ st.set_page_config(
 init_session_state()
 render_sidebar()
 
-st.title("🔬 Deep Analysis")
-st.caption("_EDA-compliant: statistics, outliers, correlations, multi-dimensional_")
+st.title(t("deep.title"))
+st.caption(t("deep.caption"))
 
 exports = {}
 
@@ -40,15 +41,16 @@ try:
 
     # ─── Panel 3.5 — BOXPLOT by Month ───
     with st.container(border=True):
-        st.subheader("📦 Boxplot — AQI by Month")
-        st.caption("_Outlier detection: dots beyond whiskers are unusual readings_")
+        st.subheader(t("deep.boxplot"))
+        st.caption(t("deep.boxplot_caption"))
         df_box = boxplot_data()
-        exports["Boxplot Data"] = df_box
+        exports["boxplot_data"] = df_box
         if not df_box.empty:
             fig = px.box(df_box, x="month", y="aqi", color="month",
-                         title="AQI Distribution by Month", height=450)
+                         title=t("deep.boxplot_title"), height=450,
+                         labels={"month": col("month"), "aqi": col("aqi")})
             fig.add_hline(y=3, line_dash="dash", line_color="red", opacity=0.6,
-                          annotation_text="Alert Threshold (AQI ≥ 3)")
+                          annotation_text=t("common.alert_threshold"))
             fig.update_layout(showlegend=False)
             fig = style_plotly_chart(fig)
             st.plotly_chart(fig, use_container_width=True)
@@ -58,24 +60,22 @@ try:
 
     with col1:
         with st.container(border=True):
-            st.subheader("🔵 PM2.5 vs AQI")
-            st.caption("_With linear regression trendline_")
+            st.subheader(t("deep.scatter"))
+            st.caption(t("deep.scatter_caption"))
             df_scatter = scatter_data(period)
             if not df_scatter.empty:
+                labels = {"pm2_5": "PM2.5 (µg/m³)", "aqi": "AQI",
+                          "city_name": col("city_name")}
                 try:
                     fig = px.scatter(
                         df_scatter, x="pm2_5", y="aqi", color="city_name",
-                        trendline="ols",
-                        labels={"pm2_5": "PM2.5 (µg/m³)", "aqi": "AQI"},
-                        height=400,
+                        trendline="ols", labels=labels, height=400,
                     )
                 except ImportError:
-                    st.warning("⚠️ OLS trendline unavailable (statsmodels not installed). "
-                               "Showing scatter without trendline.")
+                    st.warning(t("deep.ols_warning"))
                     fig = px.scatter(
                         df_scatter, x="pm2_5", y="aqi", color="city_name",
-                        labels={"pm2_5": "PM2.5 (µg/m³)", "aqi": "AQI"},
-                        height=400,
+                        labels=labels, height=400,
                     )
                 fig = style_plotly_chart(fig)
                 st.plotly_chart(fig, use_container_width=True)
@@ -83,8 +83,8 @@ try:
     # ─── Panel 3.7 — HEATMAP Hour × Day ───
     with col2:
         with st.container(border=True):
-            st.subheader("🟥 Heatmap — AQI by Hour × Day")
-            st.caption("_Multi-dimensional view: darker = worse air quality_")
+            st.subheader(t("deep.heatmap"))
+            st.caption(t("deep.heatmap_caption"))
             df_heat = heatmap_data()
             if not df_heat.empty:
                 pivot = df_heat.pivot_table(
@@ -101,15 +101,15 @@ try:
                     colorscale="YlOrRd",
                     annotation_text=pivot.round(2).values,
                     font_colors=["black", "white"],
-                    hovertemplate="Hour: %{x}<br>Day: %{y}<br>Avg AQI: %{z}<extra></extra>",
+                    hovertemplate=f"{t('deep.hour')}: %{{x}}<br>{t('deep.day')}: %{{y}}<br>{col('avg_aqi')}: %{{z}}<extra></extra>",
                 )
                 fig.update_layout(height=400, margin=dict(l=0, r=0, t=0, b=0))
                 st.plotly_chart(fig, use_container_width=True)
 
     # ─── Panel 3.1 — Correlation Matrix ───
     with st.container(border=True):
-        st.subheader("🔗 Pollutant Correlation Matrix")
-        st.caption("_1.0 = perfect correlation, 0 = none, -1 = inverse_")
+        st.subheader(t("deep.corr_matrix"))
+        st.caption(t("deep.corr_caption"))
         df_corr = correlation_matrix(period)
         if not df_corr.empty:
             corr_data = df_corr.iloc[0].to_dict()
@@ -129,26 +129,27 @@ try:
                 matrix, x=pollutants, y=pollutants,
                 text_auto=".2f", color_continuous_scale="RdBu_r",
                 range_color=[-1, 1], aspect="auto", height=400,
-                labels={"x": "", "y": "", "color": "Correlation"},
+                labels={"x": "", "y": "", "color": t("deep.correlation")},
             )
             fig = style_plotly_chart(fig)
             st.plotly_chart(fig, use_container_width=True)
 
             aqi_pm25 = corr_data.get("AQI_x_PM25", 0)
             aqi_pm10 = corr_data.get("AQI_x_PM10", 0)
-            st.info(f"💡 **Key insight:** AQI is most correlated with "
-                    f"PM2.5 ({aqi_pm25}) and PM10 ({aqi_pm10})")
+            st.info(t("deep.key_insight", pm25=aqi_pm25, pm10=aqi_pm10))
 
     # ─── Panel 3.2 — Monthly Statistics ───
-    with st.expander("📊 Monthly Statistical Distribution", expanded=False):
+    with st.expander(t("deep.monthly_stats"), expanded=False):
         df_stats = monthly_statistics()
-        exports["Monthly Statistics"] = df_stats
+        exports["monthly_statistics"] = df_stats
         if not df_stats.empty:
-            styled = df_stats.style.background_gradient(
-                subset=["avg", "median", "max", "std"], cmap="RdYlGn_r"
+            fmt_cols = ["avg", "median", "std", "min", "max", "p25", "p75"]
+            display = df_stats.rename(columns=lambda c: col(str(c)) if isinstance(c, str) else c)
+            styled = display.style.background_gradient(
+                subset=[col("avg"), col("median"), col("max"), col("std")], cmap="RdYlGn_r"
             ).format({
-                "avg": "{:.2f}", "median": "{:.2f}", "std": "{:.2f}",
-                "min": "{:.2f}", "max": "{:.2f}", "p25": "{:.2f}", "p75": "{:.2f}",
+                col("avg"): "{:.2f}", col("median"): "{:.2f}", col("std"): "{:.2f}",
+                col("min"): "{:.2f}", col("max"): "{:.2f}", col("p25"): "{:.2f}", col("p75"): "{:.2f}",
             })
             st.dataframe(styled, use_container_width=True, hide_index=True)
 
@@ -157,29 +158,33 @@ try:
 
     with col1:
         with st.container(border=True):
-            st.subheader("🏜️ Seasonal Analysis")
+            st.subheader(t("deep.seasonal"))
             df_season = seasonal_analysis()
             if not df_season.empty:
                 fig = px.bar(df_season, x="season", y=["avg_aqi", "avg_pm25", "avg_o3"],
-                             barmode="group", title="Dry Season vs Wet Season",
-                             labels={"value": "Average", "season": ""})
+                             barmode="group", title=t("deep.seasonal_title"),
+                             labels={"value": col("value"), "season": "",
+                                     "avg_aqi": col("avg_aqi"), "avg_pm25": col("avg_pm25"),
+                                     "avg_o3": col("avg_o3")})
                 fig = style_plotly_chart(fig)
                 st.plotly_chart(fig, use_container_width=True)
 
     with col2:
         with st.container(border=True):
-            st.subheader("💼 Weekday vs Weekend")
+            st.subheader(t("deep.weekday_weekend"))
             df_we = weekday_weekend()
             if not df_we.empty:
                 fig = px.bar(df_we, x="day_type", y=["avg_aqi", "avg_pm25", "avg_no2"],
-                             barmode="group", title="Weekday vs Weekend Effect",
-                             labels={"value": "Average", "day_type": ""})
+                             barmode="group", title=t("deep.weekday_weekend_title"),
+                             labels={"value": col("value"), "day_type": "",
+                                     "avg_aqi": col("avg_aqi"), "avg_pm25": col("avg_pm25"),
+                                     "avg_no2": col("avg_no2")})
                 fig = style_plotly_chart(fig)
                 st.plotly_chart(fig, use_container_width=True)
 
     # ─── Exports ───
-    with st.expander("⬇️ Export data (CSV)", expanded=False):
-        for name, df in exports.items():
-            csv_download(df, name, name.lower().replace(" ", "_") + ".csv")
+    with st.expander(t("common.export_csv"), expanded=False):
+        for key, df in exports.items():
+            csv_download(df, export_label(key), f"{key}.csv")
 except DatabaseError as e:
-    st.error(f"❌ Database error: {e}")
+    st.error(t("common.db_error", msg=e))

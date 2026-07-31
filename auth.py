@@ -14,6 +14,7 @@ import urllib.request
 
 import streamlit as st
 
+from i18n import t, init_lang
 from users import get_user, get_user_by_email, verify_password
 
 # Role model: everyone is a viewer (public); only admin gates pages.
@@ -47,6 +48,7 @@ PAGE_LABELS = {
     "user_management": "👥 User Management",
     "data_explorer": "🗄️ Data Explorer",
 }
+# Legacy label map kept for tests; the sidebar renders `nav.*` i18n keys instead.
 
 
 def get_available_pages(role: str) -> list:
@@ -143,6 +145,7 @@ def _set_session(user: dict):
 
 def init_session_state():
     """Ensure session keys exist. Anonymous users are public viewers."""
+    init_lang()
     handle_google_callback()
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
@@ -160,27 +163,27 @@ def _handle_password_login(username: str, password: str):
         _set_session(user)
         st.rerun()
     else:
-        st.error("❌ Invalid username or password.")
+        st.error(t("auth.invalid_credentials"))
 
 
 def render_login_form():
     """Render the admin login form (Google + username/password)."""
-    st.markdown("## 🔐 Admin Login")
-    st.caption("_Sign in to access admin pages. Air quality data stays public._")
-    tab_google, tab_password = st.tabs(["Sign in with Google", "Username & Password"])
+    st.markdown(t("auth.login_title"))
+    st.caption(t("auth.login_caption"))
+    tab_google, tab_password = st.tabs([t("auth.tab_google"), t("auth.tab_password")])
 
     with tab_google:
         url = _google_auth_url()
         if url:
-            st.link_button("Sign in with Google", url)
+            st.link_button(t("auth.tab_google"), url)
         else:
-            st.info("Google login is not configured yet — use Username & Password.")
+            st.info(t("auth.google_unconfigured"))
 
     with tab_password:
         with st.form("login_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Sign in", type="primary")
+            username = st.text_input(t("auth.username"))
+            password = st.text_input(t("auth.password"), type="password")
+            submitted = st.form_submit_button(t("auth.sign_in"), type="primary")
             if submitted:
                 _handle_password_login(username, password)
 
@@ -190,7 +193,8 @@ def require_role(min_role: str):
     role = st.session_state.get("role", "viewer")
     if ROLE_HIERARCHY.get(role, -1) >= ROLE_HIERARCHY.get(min_role, 99):
         return
-    st.error(f"⛔ Access denied — {min_role} role required.")
+    role_label = t("auth.role_admin") if min_role == "admin" else t("auth.role_viewer")
+    st.error(t("auth.access_denied", role=role_label))
     render_login_form()
     st.stop()
 

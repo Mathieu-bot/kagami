@@ -8,6 +8,7 @@ import streamlit as st
 
 from auth import init_session_state, require_role
 from sidebar import render_sidebar
+from i18n import t, col
 from users import (
     list_users,
     create_user,
@@ -29,79 +30,90 @@ init_session_state()
 require_role("admin")
 render_sidebar()
 
-st.title("👥 User Management")
-st.caption("_Manage admin access — users are stored locally, NeonDB stays untouched._")
+st.title(t("users.title"))
+st.caption(t("users.caption"))
+
+
+def _role_display(role: str) -> str:
+    """Translate a role id for display (values stay English in the store)."""
+    return t("auth.role_admin") if role == "admin" else t("auth.role_viewer")
+
 
 # ─── Create user ───
-with st.expander("➕ Create user", expanded=True):
+with st.expander(t("users.create"), expanded=True):
     with st.form("create_user_form"):
         c1, c2 = st.columns(2)
-        new_username = c1.text_input("Username", key="um_username")
-        new_email = c2.text_input("Email (optional, for Google login)", key="um_email")
+        new_username = c1.text_input(t("auth.username"), key="um_username")
+        new_email = c2.text_input(t("users.email_optional"), key="um_email")
         c3, c4 = st.columns(2)
-        new_password = c3.text_input("Password", type="password", key="um_password")
-        new_role = c4.selectbox("Role", ["viewer", "admin"], key="um_role")
-        if st.form_submit_button("Create user"):
+        new_password = c3.text_input(t("auth.password"), type="password", key="um_password")
+        new_role = c4.selectbox(col("role"), ["viewer", "admin"], key="um_role",
+                                format_func=_role_display)
+        if st.form_submit_button(t("users.create_btn")):
             if not new_username or not new_password:
-                st.error("Username and password are required.")
+                st.error(t("users.required"))
             else:
                 try:
                     create_user(new_username, new_email or None, new_password, new_role)
-                    st.success(f"User '{new_username}' created.")
+                    st.success(t("users.created", name=new_username))
                     st.rerun()
                 except ValueError as e:
                     st.error(str(e))
 
 # ─── Users table ───
-st.subheader("Existing users")
+st.subheader(t("users.existing"))
 users = list_users()
 if not users:
-    st.info("No users yet — create the first one above.")
+    st.info(t("users.none"))
 else:
     st.dataframe(
         [{"username": u["username"], "email": u["email"] or "-",
-          "role": u["role"], "active": "✅" if u["active"] else "❌",
+          "role": _role_display(u["role"]), "active": "✅" if u["active"] else "❌",
           "created_at": u["created_at"]} for u in users],
         use_container_width=True,
         hide_index=True,
+        column_config={"username": col("username"), "email": col("email"),
+                       "role": col("role"), "active": col("active"),
+                       "created_at": col("created_at")},
     )
 
     for user in users:
-        with st.expander(f"{user['username']} — {user['role']}"):
+        with st.expander(f"{user['username']} — {_role_display(user['role'])}"):
             c1, c2 = st.columns(2)
             with c1:
                 new_role = st.selectbox(
-                    "Role", ["viewer", "admin"],
+                    col("role"), ["viewer", "admin"],
                     index=0 if user["role"] == "viewer" else 1,
                     key=f"role_{user['username']}",
+                    format_func=_role_display,
                 )
-                if st.button("Update role", key=f"btn_role_{user['username']}"):
+                if st.button(t("users.update_role"), key=f"btn_role_{user['username']}"):
                     update_role(user["username"], new_role)
-                    st.success(f"Role of '{user['username']}' set to {new_role}.")
+                    st.success(t("users.role_updated", name=user["username"], role=_role_display(new_role)))
                     st.rerun()
             with c2:
                 new_active = st.checkbox(
-                    "Active", value=bool(user["active"]),
+                    t("users.active"), value=bool(user["active"]),
                     key=f"active_{user['username']}",
                 )
-                if st.button("Toggle active", key=f"btn_active_{user['username']}"):
+                if st.button(t("users.toggle_active"), key=f"btn_active_{user['username']}"):
                     toggle_active(user["username"], new_active)
-                    st.success(f"'{user['username']}' active = {new_active}.")
+                    st.success(t("users.toggled", name=user["username"], active=new_active))
                     st.rerun()
 
             pwd = st.text_input(
-                "New password", type="password", key=f"pwd_{user['username']}",
+                t("users.new_password"), type="password", key=f"pwd_{user['username']}",
             )
             c3, c4 = st.columns(2)
             with c3:
-                if st.button("Reset password", key=f"btn_pwd_{user['username']}"):
+                if st.button(t("users.reset_password"), key=f"btn_pwd_{user['username']}"):
                     if pwd:
                         update_password(user["username"], pwd)
-                        st.success(f"Password of '{user['username']}' updated.")
+                        st.success(t("users.password_updated", name=user["username"]))
                     else:
-                        st.warning("Enter a new password first.")
+                        st.warning(t("users.enter_password"))
             with c4:
-                if st.button("🗑 Delete", key=f"btn_del_{user['username']}"):
+                if st.button(t("users.delete"), key=f"btn_del_{user['username']}"):
                     delete_user(user["username"])
-                    st.success(f"User '{user['username']}' deleted.")
+                    st.success(t("users.deleted", name=user["username"]))
                     st.rerun()

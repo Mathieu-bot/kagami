@@ -12,6 +12,7 @@ import pandas as pd
 from auth import init_session_state, require_role
 from sidebar import render_sidebar
 from config import DatabaseError, query
+from i18n import t, translate_df
 
 # ─── Page config (must be first) ───
 st.set_page_config(
@@ -25,8 +26,8 @@ init_session_state()
 render_sidebar()
 require_role("admin")  # Admin pages only
 
-st.title("🗄️ Data Explorer")
-st.caption("_Read-only SQL access to the NeonDB warehouse (admin)_")
+st.title(t("explorer.title"))
+st.caption(t("explorer.caption"))
 
 MAX_ROWS = 1000
 _READ_ONLY_RE = re.compile(r"^\s*(SELECT|WITH|EXPLAIN)\b", re.IGNORECASE)
@@ -55,41 +56,41 @@ QUICK_QUERIES = {
 try:
     # ─── Quick browse ───
     with st.container(border=True):
-        st.subheader("⚡ Quick Queries")
-        quick = st.selectbox("Pick a query", list(QUICK_QUERIES) + ["— custom SQL —"],
+        st.subheader(t("explorer.quick"))
+        quick = st.selectbox(t("explorer.pick"), list(QUICK_QUERIES) + [t("explorer.custom")],
                              key="explorer_quick")
         if isinstance(quick, str) and quick in QUICK_QUERIES:
             sql = QUICK_QUERIES[quick]
         else:
             sql = st.text_area(
-                "SQL (read-only)",
+                t("explorer.sql_label"),
                 value="SELECT city_name FROM dim_city ORDER BY city_name",
                 height=140, key="explorer_sql",
             )
 
         col_run, col_hint = st.columns([1, 4])
         with col_run:
-            run = st.button("▶️ Run query", key="explorer_run")
+            run = st.button(t("explorer.run"), key="explorer_run")
         with col_hint:
-            st.caption(f"Only SELECT / WITH / EXPLAIN. Results capped at {MAX_ROWS} rows.")
+            st.caption(t("explorer.hint", max=MAX_ROWS))
 
         if run:
             sql = sql.strip().rstrip(";")
             if not sql:
-                st.error("Please write a query first.")
+                st.error(t("explorer.write_query"))
             elif not _READ_ONLY_RE.match(sql):
-                st.error("⛔ Only read-only queries (SELECT / WITH / EXPLAIN) are allowed.")
+                st.error(t("explorer.read_only"))
             else:
                 if not _HAS_LIMIT_RE.search(sql) and not sql.upper().startswith("EXPLAIN"):
                     sql = f"{sql} LIMIT {MAX_ROWS}"
                 try:
-                    with st.spinner("Running query..."):
+                    with st.spinner(t("explorer.running")):
                         df = query(sql)
-                    st.success(f"✅ {len(df)} row(s) returned.")
-                    st.dataframe(df, use_container_width=True, hide_index=True)
+                    st.success(t("explorer.rows", n=len(df)))
+                    st.dataframe(translate_df(df), use_container_width=True, hide_index=True)
                     if not df.empty:
                         st.download_button(
-                            "⬇️ Download CSV",
+                            t("common.download_csv"),
                             df.to_csv(index=False).encode("utf-8"),
                             file_name="explorer_result.csv",
                             mime="text/csv",
@@ -98,4 +99,4 @@ try:
                 except DatabaseError as e:
                     st.error(f"❌ {e}")
 except DatabaseError as e:
-    st.error(f"❌ Database error: {e}")
+    st.error(t("common.db_error", msg=e))

@@ -60,8 +60,21 @@ def aqi_color_map():
     return {1: "#00E400", 2: "#FFFF00", 3: "#FF7E00", 4: "#FF0000", 5: "#7E0023"}
 
 
-def aqi_level_label(aqi_value: int) -> str:
-    """Return a human-readable AQI level label."""
-    labels = {1: "Good", 2: "Moderate", 3: "Unhealthy",
-              4: "Very Unhealthy", 5: "Hazardous"}
-    return labels.get(aqi_value, f"Level {aqi_value}")
+def aqi_level_label(aqi_value: int, lang: str = None) -> str:
+    """Return a human-readable AQI level label (language-aware).
+
+    Outside a Streamlit runtime (e.g. plain unit tests) the language
+    falls back to English so the helper never crashes.
+    """
+    from i18n import t
+    if lang is None:
+        try:
+            from i18n import current_lang
+            lang = current_lang()
+        except Exception:
+            lang = "en"
+    key = {1: "level.good", 2: "level.moderate", 3: "level.unhealthy",
+           4: "level.very_unhealthy", 5: "level.hazardous"}.get(aqi_value)
+    if key:
+        return t(key, lang=lang)
+    return t("level.fallback", lang=lang, v=aqi_value)

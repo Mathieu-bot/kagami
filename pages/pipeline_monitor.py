@@ -13,6 +13,7 @@ from queries import (
     data_gaps,
 )
 from utils.charts import style_plotly_chart
+from i18n import t, col, translate_df
 
 # ─── Page config (must be first) ───
 st.set_page_config(
@@ -26,8 +27,8 @@ init_session_state()
 require_role("admin")
 render_sidebar()
 
-st.title("⚙️ Pipeline Monitor")
-st.caption("_Admin panel — data pipeline health and quality_")
+st.title(t("pipeline.title"))
+st.caption(t("pipeline.caption"))
 
 try:
     # ─── Row 1: Status + Last Ingestion ───
@@ -35,36 +36,41 @@ try:
 
     with col1:
         with st.container(border=True):
-            st.subheader("🔄 Pipeline Status")
+            st.subheader(t("pipeline.status"))
             df_status = pipeline_status()
             if not df_status.empty:
                 row = df_status.iloc[0]
                 emoji = {"Up to date": "🟢", "Delayed": "🟡", "Critical": "🔴"}
-                st.metric("Status", f"{emoji.get(row['status'], '❓')} {row['status']}")
+                label = {
+                    "Up to date": t("hq.status_up_to_date"),
+                    "Delayed": t("hq.status_delayed"),
+                    "Critical": t("hq.status_critical"),
+                }
+                st.metric(col("status"), f"{emoji.get(row['status'], '❓')} {label.get(row['status'], row['status'])}")
 
     with col2:
         with st.container(border=True):
-            st.subheader("🕐 Last Ingestion")
+            st.subheader(t("pipeline.last_ingestion"))
             df_last = last_ingestion()
             if not df_last.empty:
-                st.metric("Last Record", df_last["last_record"].iloc[0])
+                st.metric(t("pipeline.last_record"), df_last["last_record"].iloc[0])
 
     with col3:
         with st.container(border=True):
-            st.subheader("📡 Data Completeness")
+            st.subheader(t("pipeline.data_completeness"))
             df_comp = data_completeness()
             if not df_comp.empty:
                 comp = df_comp["completeness"].iloc[0]
-                st.metric("Today", f"{comp}%")
+                st.metric(t("pipeline.today"), f"{comp}%")
                 st.progress(min(comp, 100) / 100)
 
     # ─── Panel 4.2 — Records per Day ───
     with st.container(border=True):
-        st.subheader("📊 Records per Day (Last 7 Days)")
+        st.subheader(t("pipeline.records_per_day"))
         df_records = records_per_day()
         if not df_records.empty:
             fig = px.bar(df_records, x="full_date", y="records",
-                         labels={"full_date": "Date", "records": "Records"},
+                         labels={"full_date": col("full_date"), "records": t("pipeline.records")},
                          color="records", color_continuous_scale="Greens")
             fig.update_traces(texttemplate="%{y}", textposition="outside")
             fig = style_plotly_chart(fig)
@@ -72,7 +78,7 @@ try:
 
     # ─── Panel 4.3 — Data Gaps ───
     with st.container(border=True):
-        st.subheader("🔍 Missing Data Detection (Last 24h)")
+        st.subheader(t("pipeline.missing_data"))
         df_gaps = data_gaps()
         if not df_gaps.empty:
             missing = df_gaps[df_gaps["status"] == "Missing"]
@@ -81,27 +87,28 @@ try:
             ok_count = total - missing_count
 
             col1, col2 = st.columns(2)
-            col1.metric("✅ Complete Records", ok_count)
-            col2.metric("❌ Missing Records", missing_count)
+            col1.metric(t("pipeline.complete_records"), ok_count)
+            col2.metric(t("pipeline.missing_records"), missing_count)
 
             if missing_count > 0:
-                st.warning(f"⚠️ {missing_count} missing records detected out of {total}")
+                st.warning(t("pipeline.missing_warning", n=missing_count, total=total))
                 st.dataframe(
-                    missing[["full_date", "hour", "city_name"]],
+                    translate_df(missing[["full_date", "hour", "city_name"]]),
                     use_container_width=True,
                     hide_index=True,
                 )
             else:
-                st.success("✅ No missing data in the last 24 hours")
+                st.success(t("pipeline.no_missing"))
 
             fig = px.pie(
                 values=[ok_count, missing_count],
-                names=["Complete", "Missing"],
-                color=["Complete", "Missing"],
-                color_discrete_map={"Complete": "#00E400", "Missing": "#FF0000"},
+                names=[t("pipeline.complete"), t("pipeline.missing")],
+                color=[t("pipeline.complete"), t("pipeline.missing")],
+                color_discrete_map={t("pipeline.complete"): "#00E400",
+                                    t("pipeline.missing"): "#FF0000"},
                 hole=0.6,
             )
             fig.update_layout(height=250, margin=dict(l=0, r=0, t=0, b=0))
             st.plotly_chart(fig, use_container_width=True)
 except DatabaseError as e:
-    st.error(f"❌ Database error: {e}")
+    st.error(t("common.db_error", msg=e))
