@@ -3,6 +3,7 @@
 import os
 import streamlit as st
 from auth import get_available_pages, PAGE_LABELS
+from config import DatabaseError
 from queries import list_cities
 
 # Project root directory (where sidebar.py lives)
@@ -41,8 +42,12 @@ def render_sidebar():
         st.subheader("Filters")
 
         # Cities
-        df_cities = list_cities()
-        all_cities = df_cities["city_name"].tolist() if not df_cities.empty else []
+        try:
+            df_cities = list_cities()
+            all_cities = df_cities["city_name"].tolist() if not df_cities.empty else []
+        except DatabaseError:
+            st.warning("⚠️ Could not load cities from database.")
+            all_cities = []
         selected_cities = st.multiselect(
             "Cities",
             all_cities,
