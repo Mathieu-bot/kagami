@@ -38,17 +38,20 @@ def mock_streamlit():
         "streamlit.plotly_chart", "streamlit.expander", "streamlit.container",
         "streamlit.columns", "streamlit.sidebar", "streamlit.spinner",
         "streamlit.cache_data", "streamlit.cache_resource",
-        "streamlit.page_link", "streamlit.title",
+        "streamlit.page_link", "streamlit.title", "streamlit.set_page_config",
     ]
     with ExitStack() as stack:
         for target in targets:
             stack.enter_context(patch(target))
-        mock_col = MagicMock()
-        mock_col.__enter__ = MagicMock(return_value=None)
-        mock_col.__exit__ = MagicMock(return_value=None)
+
+        def _make_columns(n):
+            """Return n context-manager column mocks."""
+            count = n if isinstance(n, int) else len(n)
+            return [MagicMock() for _ in range(count)]
+
         with patch("streamlit.session_state", {}), \
              patch("streamlit.context", create=True), \
-             patch("streamlit.columns", return_value=[mock_col, mock_col]):
+             patch("streamlit.columns", side_effect=_make_columns):
             yield
 
 
