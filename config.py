@@ -42,11 +42,13 @@ def get_engine():
             "NeonDB URL not found. Set NEON_URL env var or "
             "add neon_url to .streamlit/secrets.toml"
         )
-    _engine = create_engine(url, pool_size=5, max_overflow=2)
+    # pool_pre_ping: drop stale pooled connections on the small VM where
+    # idle connections may be killed by the server / network middleboxes.
+    _engine = create_engine(url, pool_size=5, max_overflow=2, pool_pre_ping=True)
     return _engine
 
 
-def query(sql: str, params: dict = None) -> pd.DataFrame:
+def query(sql: str, params: dict = None, read_only: bool = True) -> pd.DataFrame:
     """Execute a SQL query and return a DataFrame.
 
     Parameters
@@ -55,6 +57,11 @@ def query(sql: str, params: dict = None) -> pd.DataFrame:
         SQL statement with optional :param placeholders.
     params : dict, optional
         Bind parameter values (e.g. {"city_name": "Antananarivo"}).
+    read_only : bool, default True
+        Run the statement inside a ``READ ONLY`` transaction so any
+        accidental write (INSERT/UPDATE/DELETE/DDL) fails at the
+        database level. The dashboard only reads data, so the default
+        is always read-only.
 
     Returns
     -------
@@ -69,6 +76,8 @@ def query(sql: str, params: dict = None) -> pd.DataFrame:
     engine = get_engine()
     try:
         with engine.connect() as conn:
+            if read_only:
+                conn.execute(text("SET TRANSACTION READ ONLY"))
             if params:
                 result = pd.read_sql(text(sql), conn, params=params)
             else:

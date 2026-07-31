@@ -1,10 +1,10 @@
 """Dashboard 12 — Data Explorer (admin only).
 
-Read-only SQL explorer against NeonDB. Only SELECT / WITH / EXPLAIN
-statements are accepted; results are capped to protect the small VM.
+Read-only SQL explorer against NeonDB. Only a single SELECT / WITH /
+EXPLAIN statement is accepted (see utils/sql_guard.py); results are
+capped to protect the small VM, and every query runs in a READ ONLY
+transaction at the database layer.
 """
-
-import re
 
 import streamlit as st
 import pandas as pd
@@ -12,6 +12,7 @@ import pandas as pd
 from auth import init_session_state, require_role
 from sidebar import render_sidebar
 from config import DatabaseError, query
+from utils.sql_guard import is_read_only_sql, enforce_limit
 from i18n import t, translate_df
 
 # ─── Page config (must be first) ───
@@ -30,8 +31,6 @@ st.title(t("explorer.title"))
 st.caption(t("explorer.caption"))
 
 MAX_ROWS = 1000
-_READ_ONLY_RE = re.compile(r"^\s*(SELECT|WITH|EXPLAIN)\b", re.IGNORECASE)
-_HAS_LIMIT_RE = re.compile(r"\bLIMIT\s+\d+\s*$", re.IGNORECASE)
 
 QUICK_QUERIES = {
     "dim_city": "SELECT * FROM dim_city ORDER BY city_name",
@@ -73,16 +72,16 @@ try:
             run = st.button(t("explorer.run"), key="explorer_run")
         with col_hint:
             st.caption(t("explorer.hint", max=MAX_ROWS))
+            st.caption(t("explorer.single_statement"))
 
         if run:
             sql = sql.strip().rstrip(";")
             if not sql:
                 st.error(t("explorer.write_query"))
-            elif not _READ_ONLY_RE.match(sql):
+            elif not is_read_only_sql(sql):
                 st.error(t("explorer.read_only"))
             else:
-                if not _HAS_LIMIT_RE.search(sql) and not sql.upper().startswith("EXPLAIN"):
-                    sql = f"{sql} LIMIT {MAX_ROWS}"
+                sql = enforce_limit(sql, max_rows=MAX_ROWS)
                 try:
                     with st.spinner(t("explorer.running")):
                         df = query(sql)
