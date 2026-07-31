@@ -108,13 +108,13 @@ try:
             st.subheader("🗺️ Air Quality Map")
             df_map = air_quality_map()
             if not df_map.empty:
-                fig = px.scatter_mapbox(
+                fig = px.scatter_map(
                     df_map, lat="latitude", lon="longitude",
                     size="aqi", color="aqi", hover_name="city_name",
                     hover_data={"status": True, "latitude": False, "longitude": False},
                     color_continuous_scale=["green", "yellow", "orange", "red"],
                     zoom=5, center={"lat": -18.9, "lon": 47.5},
-                    mapbox_style="open-street-map", height=350,
+                    map_style="open-street-map", height=350,
                 )
                 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
                 st.plotly_chart(fig, use_container_width=True)
