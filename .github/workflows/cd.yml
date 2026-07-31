@@ -34,6 +34,12 @@ jobs:
             # Validate the Caddyfile before touching the live server
             caddy validate --config Caddyfile --adapter caddyfile || exit 1
             sudo cp Caddyfile /etc/caddy/Caddyfile
+            # Deploy the static landing page. We serve from /var/www/kagami
+            # (readable by the caddy user) rather than from the git checkout,
+            # which lives under /home/ubuntu where permissions block caddy.
+            sudo mkdir -p /var/www/kagami
+            sudo cp -r www/. /var/www/kagami/
+            sudo chown -R caddy:caddy /var/www/kagami
             sudo systemctl restart streamlit-kagami
             sudo systemctl reload caddy
             # Streamlit cold-starts slowly on the 1-CPU VM: poll until healthy.

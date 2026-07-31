@@ -25,9 +25,12 @@ kagami.tafita.online {
 	# Normalise /aqi → /aqi/ so the app loads correctly.
 	redir /aqi /aqi/ 308
 
-	# Landing page — list of Kagami apps (static site served from the repo).
+	# Landing page — list of Kagami apps (static site).
+	# Served from /var/www/kagami, a directory the caddy user can read
+	# (unlike /home/ubuntu, whose permissions block other users). The CD
+	# workflow copies www/ there on every deploy.
 	handle / {
-		root * /home/ubuntu/kagami/www
+		root * /var/www/kagami
 		file_server
 	}
 }
