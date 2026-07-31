@@ -66,20 +66,6 @@ def cities_in_alert():
     """)
 
 
-def cities_alert_sparkline():
-    """Panel 1.2 — Hourly alert count sparkline for today."""
-    return query("""
-        SELECT
-            (d.full_date::text || 'T' || LPAD(d.hour::text, 2, '0') || ':00:00')::timestamp AS time,
-            COUNT(*) FILTER (WHERE f.aqi >= 3) AS alert_count
-        FROM fact_aqi f
-        JOIN dim_date d ON f.date_key = d.date_key
-        WHERE d.full_date = CURRENT_DATE
-        GROUP BY d.full_date, d.hour
-        ORDER BY time
-    """)
-
-
 def worst_pollutant(period: str = "7d"):
     """Panel 1.3 — Pollutant closest to WHO threshold."""
     interval = period_to_interval(period)
