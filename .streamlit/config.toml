@@ -6,6 +6,8 @@ font = "sans serif"
 [server]
 maxUploadSize = 10
 enableXsrfProtection = true
+# Multi-app platform: this app is served under /aqi/ by Caddy.
+baseUrlPath = "aqi"
 
 [browser]
 gatherUsageStats = false

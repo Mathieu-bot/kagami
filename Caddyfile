@@ -1,0 +1,26 @@
+# Kagami — Air Quality Dashboards (company of dashboards)
+#
+# Every dashboard is mounted under its own prefix and shares the same
+# enterprise user store (users.db). The AQI dashboard is the first app,
+# served at /aqi/ (Streamlit runs with baseUrlPath="aqi").
+#
+# Future apps mount here too:
+#   handle /health/*   { reverse_proxy localhost:8502 }
+#   handle /stations/* { reverse_proxy localhost:8503 }
+
+kagami.tafita.online {
+	# Google OAuth is registered against the ROOT URL
+	# (https://kagami.tafita.online/?oauth=callback). Redirect the root to
+	# /aqi/ while preserving the query string so the callback keeps working.
+	@root path /
+	redir @root /aqi/{query} 302
+
+	# AQI dashboard (Streamlit, baseUrlPath="aqi").
+	# The full /aqi/... path is forwarded as-is to the upstream.
+	handle /aqi/* {
+		reverse_proxy localhost:8501
+	}
+
+	# Normalise /aqi → /aqi/ so the app loads correctly.
+	redir /aqi /aqi/ 308
+}
