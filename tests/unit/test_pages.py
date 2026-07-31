@@ -22,6 +22,8 @@ PAGES = {
         os.path.dirname(__file__), "..", "..", "pages", "deep_analysis.py"),
     "pipeline_monitor": os.path.join(
         os.path.dirname(__file__), "..", "..", "pages", "pipeline_monitor.py"),
+    "user_management": os.path.join(
+        os.path.dirname(__file__), "..", "..", "pages", "user_management.py"),
 }
 
 
