@@ -33,7 +33,17 @@ jobs:
             sudo cp Caddyfile /etc/caddy/Caddyfile
             sudo systemctl restart streamlit-kagami
             sudo systemctl reload caddy
-            # Health checks: app directly, then through Caddy (/aqi/ prefix)
-            curl -fsS http://localhost:8501/aqi/_stcore/health > /dev/null || exit 1
+            # Streamlit cold-starts slowly on the 1-CPU VM: poll until healthy.
+            healthy=""
+            for attempt in $(seq 1 12); do
+              if curl -fsS http://localhost:8501/aqi/_stcore/health > /dev/null 2>&1; then
+                healthy="yes"
+                break
+              fi
+              echo "Waiting for streamlit (attempt $attempt/12)..."
+              sleep 5
+            done
+            [ -n "$healthy" ] || { echo "❌ streamlit did not become healthy"; exit 1; }
+            # Health check through Caddy (/aqi/ prefix)
             curl -fsS -o /dev/null https://kagami.tafita.online/aqi/_stcore/health || echo "⚠️ public health check failed — Caddy may still be starting"
             echo "✅ Deployed $(git rev-parse --short HEAD)"
