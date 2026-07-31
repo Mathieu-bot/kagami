@@ -1,9 +1,22 @@
 """Shared fixtures and mocks for all tests."""
 
+import os
+import sys
 import pytest
 import pandas as pd
 from unittest.mock import patch, MagicMock
 from contextlib import ExitStack
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+
+@pytest.fixture(autouse=True)
+def reset_engine_cache():
+    """Reset the cached SQLAlchemy engine so tests stay isolated."""
+    import config
+    config._engine = None
+    yield
+    config._engine = None
 
 
 @pytest.fixture

@@ -13,18 +13,26 @@ from sqlalchemy import create_engine, text
 class DatabaseError(Exception):
     """Raised when a database operation fails."""
 
+# Cached engine (module-level singleton) so the connection pool
+# is created once and reused across queries instead of per-call.
+_engine = None
+
 
 def get_engine():
-    """Return a SQLAlchemy engine connected to NeonDB.
+    """Return a cached SQLAlchemy engine connected to NeonDB.
 
     Reads the connection URL from st.secrets (Streamlit cloud) or
-    NEON_URL environment variable (local / CI).
+    NEON_URL environment variable (local / CI). The engine is created
+    once and reused, keeping the connection pool alive.
 
     Raises
     ------
     DatabaseError
         If no database URL is configured.
     """
+    global _engine
+    if _engine is not None:
+        return _engine
     try:
         url = st.secrets.get("neon_url") or os.environ.get("NEON_URL")
     except Exception:
@@ -34,7 +42,8 @@ def get_engine():
             "NeonDB URL not found. Set NEON_URL env var or "
             "add neon_url to .streamlit/secrets.toml"
         )
-    return create_engine(url, pool_size=5, max_overflow=2)
+    _engine = create_engine(url, pool_size=5, max_overflow=2)
+    return _engine
 
 
 def query(sql: str, params: dict = None) -> pd.DataFrame:
