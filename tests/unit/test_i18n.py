@@ -141,3 +141,58 @@ class TestLangLifecycle:
         st.session_state["lang"] = "en"
         out = translate_df(df)
         assert list(out.columns) == ["City"]
+
+
+class TestAllLiteralKeysDefined:
+    """W10: every `t("...")` / `col("...")` / `export_label("...")` literal
+    used in the application code must exist in the FR and EN tables.
+
+    This is a static (AST) check so a typo in a translation key is caught
+    at test time instead of silently falling back to the raw key at runtime.
+    """
+
+    @staticmethod
+    def _used_keys(path):
+        """Return {function_name: {literal_key, ...}} for t()/col() calls."""
+        import ast
+        from collections import defaultdict
+        keys = defaultdict(set)
+        with open(path, encoding="utf-8") as fh:
+            tree = ast.parse(fh.read())
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func = node.func
+            name = func.id if isinstance(func, ast.Name) else None
+            if name not in ("t", "col"):
+                continue
+            for arg in node.args:
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    keys[name].add(arg.value)
+        return keys
+
+    def test_all_literal_keys_exist_in_both_languages(self, mock_streamlit):
+        import os
+        import glob
+        from i18n import STRINGS, COLUMN_LABELS
+
+        root = os.path.join(os.path.dirname(__file__), "..", "..")
+        files = [os.path.join(root, "app.py")] + \
+            glob.glob(os.path.join(root, "pages", "*.py")) + \
+            glob.glob(os.path.join(root, "utils", "*.py")) + \
+            [os.path.join(root, "sidebar.py"), os.path.join(root, "auth.py")]
+        t_keys = set()
+        col_keys = set()
+        for path in files:
+            used = self._used_keys(path)
+            t_keys |= used["t"]
+            col_keys |= used["col"]
+        # t("...") resolves through STRINGS, col("...") through COLUMN_LABELS.
+        missing_fr = sorted(k for k in t_keys if k not in STRINGS["fr"])
+        missing_en = sorted(k for k in t_keys if k not in STRINGS["en"])
+        assert not missing_fr, f"t() keys missing in FR: {missing_fr}"
+        assert not missing_en, f"t() keys missing in EN: {missing_en}"
+        col_missing_fr = sorted(k for k in col_keys if k not in COLUMN_LABELS["fr"])
+        col_missing_en = sorted(k for k in col_keys if k not in COLUMN_LABELS["en"])
+        assert not col_missing_fr, f"col() keys missing in FR: {col_missing_fr}"
+        assert not col_missing_en, f"col() keys missing in EN: {col_missing_en}"

@@ -7,6 +7,7 @@ Roles: viewer (default), analyst, admin.
 
 import streamlit as st
 import plotly.express as px
+import pandas as pd
 from auth import init_session_state
 from sidebar import render_sidebar
 from config import DatabaseError
@@ -26,7 +27,14 @@ from queries import (
     last_ingestion,
     comparison_current,
 )
-from utils.charts import style_plotly_chart, aqi_level_label
+from utils.charts import (
+    style_plotly_chart,
+    aqi_level_label,
+    rename_traces,
+    set_hover_template,
+    fmt_num,
+    pipeline_status_label,
+)
 from utils.exports import csv_download
 from i18n import t, col, export_label
 
@@ -53,10 +61,14 @@ def render_executive_summary(period: str = "7d"):
     # Best / worst city today
     df_today = comparison_current()
     if not df_today.empty:
-        best = df_today.iloc[-1]
-        worst = df_today.iloc[0]
-        points.append(t("hq.attention_best_city", city=best["city_name"], aqi=best["current_aqi"]))
-        points.append(t("hq.attention_worst_city", city=worst["city_name"], aqi=worst["current_aqi"]))
+        df_today = df_today.dropna(subset=["current_aqi"])
+        if not df_today.empty:
+            best = df_today.loc[df_today["current_aqi"].idxmin()]
+            worst = df_today.loc[df_today["current_aqi"].idxmax()]
+            points.append(t("hq.attention_best_city", city=best["city_name"],
+                            aqi=fmt_num(best["current_aqi"])))
+            points.append(t("hq.attention_worst_city", city=worst["city_name"],
+                            aqi=fmt_num(worst["current_aqi"])))
 
     # Cities currently in alert
     df_alert = cities_in_alert()
@@ -70,13 +82,15 @@ def render_executive_summary(period: str = "7d"):
     df_who = worst_pollutant(period)
     if not df_who.empty:
         row = df_who.iloc[0]
-        points.append(t("hq.attention_worst_pollutant", pollutant=row["pollutant"], pct=row["pct"]))
+        if pd.notna(row["pct"]) and pd.notna(row["pollutant"]):
+            points.append(t("hq.attention_worst_pollutant", pollutant=row["pollutant"],
+                            pct=fmt_num(row["pct"], digits=1)))
 
     # National AQI trend vs yesterday
     df_aqi = aqi_today()
     df_yest = aqi_yesterday()
     if not df_aqi.empty and not df_yest.empty:
-        delta = round(df_aqi["avg_aqi"].iloc[0] - df_yest["yesterday_avg"].iloc[0], 2)
+        delta = round(float(df_aqi["avg_aqi"].iloc[0]) - float(df_yest["yesterday_avg"].iloc[0]), 2)
         if delta > 0.1:
             points.append(t("hq.attention_trend_up", delta=delta))
         elif delta < -0.1:
@@ -86,8 +100,8 @@ def render_executive_summary(period: str = "7d"):
 
     # Data completeness gap
     df_comp = data_completeness()
-    if not df_comp.empty:
-        comp = df_comp["completeness"].iloc[0]
+    if not df_comp.empty and pd.notna(df_comp["completeness"].iloc[0]):
+        comp = float(df_comp["completeness"].iloc[0])
         if comp < 90:
             points.append(t("hq.attention_gap", pct=comp))
 
@@ -119,6 +133,7 @@ try:
         delta = round(aqi_val - yest_val, 2)
         with st.container(border=True):
             st.metric(t("hq.aqi_today"), aqi_val, delta=delta)
+            st.caption(t("hq.aqi_today_caption"))
             if not df_spark.empty:
                 fig = px.line(df_spark, x="time", y="avg_aqi", height=60)
                 fig.update_layout(
@@ -133,19 +148,25 @@ try:
     with col2:
         df_alert = cities_in_alert()
         alert_count = int(df_alert["alert_count"].iloc[0]) if not df_alert.empty else 0
-        st.metric(t("hq.cities_in_alert"), alert_count)
+        with st.container(border=True):
+            st.metric(t("hq.cities_in_alert"), alert_count)
+            st.caption(t("hq.cities_in_alert_caption"))
 
     # Panel 1.4 — Data Completeness
     with col3:
         df_comp = data_completeness()
         comp = df_comp["completeness"].iloc[0] if not df_comp.empty else 0
-        st.metric(t("hq.data_completeness"), f"{comp}%")
+        with st.container(border=True):
+            st.metric(t("hq.data_completeness"), f"{comp}%")
+            st.caption(t("hq.data_completeness_caption"))
 
     # Panel 1.5 — Days Without Alert
     with col4:
         df_days = days_without_alert()
         days = int(df_days["days_without_alert"].iloc[0]) if not df_days.empty else 0
-        st.metric(t("hq.days_without_alert"), days)
+        with st.container(border=True):
+            st.metric(t("hq.days_without_alert"), days)
+            st.caption(t("hq.days_without_alert_caption"))
 
     # ─── Row 2: Time Series + Map ───
     col1, col2 = st.columns([3, 2])
@@ -154,6 +175,7 @@ try:
     with col1:
         with st.container(border=True):
             st.subheader(t("hq.aqi_evolution"))
+            st.caption(t("hq.aqi_evolution_caption"))
             df_ts = aqi_evolution(period)
             exports["aqi_evolution"] = df_ts
             if not df_ts.empty:
@@ -162,13 +184,16 @@ try:
                                       "full_date": col("full_date"),
                                       "daily_avg": col("daily_avg"), "trend": col("trend")})
                 fig.data[1].update(line=dict(color="orange", width=3))
+                rename_traces(fig, {"daily_avg": col("daily_avg"), "trend": col("trend")})
                 fig = style_plotly_chart(fig)
+                set_hover_template(fig)
                 st.plotly_chart(fig, use_container_width=True)
 
     # Panel 1.8 — Air Quality Map
     with col2:
         with st.container(border=True):
             st.subheader(t("hq.aqi_map"))
+            st.caption(t("hq.aqi_map_caption"))
             df_map = air_quality_map()
             exports["air_quality_map"] = df_map
             if not df_map.empty:
@@ -192,6 +217,7 @@ try:
     with col1:
         with st.container(border=True):
             st.subheader(t("hq.aqi_distribution"))
+            st.caption(t("hq.aqi_distribution_caption"))
             df_dist = aqi_distribution(period)
             exports["aqi_distribution"] = df_dist
             if not df_dist.empty:
@@ -208,6 +234,7 @@ try:
     with col2:
         with st.container(border=True):
             st.subheader(t("hq.worst_pollutant"))
+            st.caption(t("hq.worst_pollutant_caption"))
             df_who = worst_pollutant(period)
             if not df_who.empty:
                 row = df_who.iloc[0]
@@ -228,9 +255,10 @@ try:
     with col1:
         with st.container(border=True):
             st.subheader(t("hq.who_exceedance"))
+            st.caption(t("hq.who_exceedance_caption"))
             df_exc = who_exceedance_rate(period)
             if not df_exc.empty:
-                rate = df_exc["exceedance_rate"].iloc[0]
+                rate = float(df_exc["exceedance_rate"].iloc[0])
                 color = "green" if rate < 5 else ("yellow" if rate < 10 else "red")
                 st.metric(t("hq.readings_exceeding"), f"{rate}%")
                 st.progress(min(rate, 100) / 100)
@@ -239,18 +267,13 @@ try:
     with col2:
         with st.container(border=True):
             st.subheader(t("hq.pipeline_health"))
+            st.caption(t("hq.pipeline_health_caption"))
             df_status = pipeline_status()
             df_last = last_ingestion()
             if not df_status.empty:
-                status_emoji = {"Up to date": "🟢", "Delayed": "🟡", "Critical": "🔴"}
-                status_label = {
-                    "Up to date": t("hq.status_up_to_date"),
-                    "Delayed": t("hq.status_delayed"),
-                    "Critical": t("hq.status_critical"),
-                }
                 row = df_status.iloc[0]
-                st.metric(col("status"),
-                          f"{status_emoji.get(row['status'], '❓')} {status_label.get(row['status'], row['status'])}")
+                emoji, label = pipeline_status_label(row["status"])
+                st.metric(col("status"), f"{emoji} {label}")
             if not df_last.empty:
                 st.caption(t("common.last_record", ts=df_last["last_record"].iloc[0]))
 

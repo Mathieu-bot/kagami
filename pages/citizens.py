@@ -13,7 +13,7 @@ from auth import init_session_state
 from sidebar import render_sidebar
 from config import DatabaseError
 from queries import control_room_status, citizen_who_exceedance
-from utils.charts import aqi_badge_color
+from utils.charts import render_city_badges
 from i18n import t, col
 
 # ─── Page config (must be first) ───
@@ -34,11 +34,13 @@ try:
     # ─── Understand the AQI ───
     with st.container(border=True):
         st.subheader(t("citizens.understand_aqi"))
+        st.caption(t("citizens.understand_aqi_caption"))
         st.markdown(t("citizens.aqi_explained"))
 
     # ─── What to do by level ───
     with st.container(border=True):
         st.subheader(t("citizens.what_to_do"))
+        st.caption(t("citizens.what_to_do_caption"))
         levels = [
             (1, t("citizens.aqi_good"), t("citizens.advice_1")),
             (2, t("citizens.aqi_moderate"), t("citizens.advice_2")),
@@ -53,11 +55,13 @@ try:
     # ─── Vulnerable groups ───
     with st.container(border=True):
         st.subheader(t("citizens.vulnerable"))
+        st.caption(t("citizens.vulnerable_caption"))
         st.markdown(t("citizens.vulnerable_text"))
 
     # ─── Monitored pollutants ───
     with st.container(border=True):
         st.subheader(t("citizens.pollutants"))
+        st.caption(t("citizens.pollutants_caption"))
         for text in (
             t("citizens.pm25_text"),
             t("citizens.pm10_text"),
@@ -72,16 +76,9 @@ try:
         st.caption(t("citizens.realtime_caption"))
         df_live = control_room_status()
         if df_live.empty:
-            st.info(t("alerts.no_control_data"))
+            st.info(t("citizens.no_live_data"))
         else:
-            cols = st.columns(len(df_live))
-            for badge, (_, row) in zip(cols, df_live.iterrows()):
-                aqi = int(row["aqi"])
-                color = aqi_badge_color(aqi)
-                with badge:
-                    with st.container(border=True):
-                        st.markdown(f"**{row['city_name']}**")
-                        st.markdown(f":{color}[**AQI {aqi}**]")
+            render_city_badges(df_live)
 
     # ─── WHO threshold exceedances by city ───
     with st.container(border=True):

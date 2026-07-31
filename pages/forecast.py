@@ -64,8 +64,10 @@ try:
     # ─── Chart: history + forecast ───
     with st.container(border=True):
         st.subheader(t("forecast.history_forecast", city=city))
+        st.caption(t("forecast.history_forecast_caption"))
         hist = history.copy()
         hist["full_date"] = pd.to_datetime(hist["full_date"])
+        hist = hist.dropna(subset=["daily_avg"])
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(

@@ -140,6 +140,7 @@ try:
 
     # ─── Panel 3.2 — Monthly Statistics ───
     with st.expander(t("deep.monthly_stats"), expanded=False):
+        st.caption(t("deep.monthly_stats_caption"))
         df_stats = monthly_statistics()
         exports["monthly_statistics"] = df_stats
         if not df_stats.empty:
@@ -159,6 +160,7 @@ try:
     with col1:
         with st.container(border=True):
             st.subheader(t("deep.seasonal"))
+            st.caption(t("deep.seasonal_caption"))
             df_season = seasonal_analysis()
             if not df_season.empty:
                 fig = px.bar(df_season, x="season", y=["avg_aqi", "avg_pm25", "avg_o3"],
@@ -172,6 +174,7 @@ try:
     with col2:
         with st.container(border=True):
             st.subheader(t("deep.weekday_weekend"))
+            st.caption(t("deep.weekday_weekend_caption"))
             df_we = weekday_weekend()
             if not df_we.empty:
                 fig = px.bar(df_we, x="day_type", y=["avg_aqi", "avg_pm25", "avg_no2"],

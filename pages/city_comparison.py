@@ -83,6 +83,7 @@ try:
                 if not df_trend.empty:
                     with st.container(border=True):
                         st.subheader(t("compare.trend_7d_title"))
+                        st.caption(t("compare.trend_7d_caption"))
                         trend_ab = df_trend[df_trend["city_name"].isin([city_a, city_b])]
                         if not trend_ab.empty:
                             fig = px.line(
@@ -131,6 +132,7 @@ try:
         if not df_current.empty:
             with st.container(border=True):
                 st.subheader(t("compare.current_aqi_by_city"))
+                st.caption(t("compare.current_aqi_caption"))
                 fig = px.bar(
                     df_current, x="city_name", y="current_aqi",
                     color="current_aqi", color_continuous_scale=["green", "yellow", "orange", "red"],
@@ -147,6 +149,7 @@ try:
         if not df_trend.empty:
             with st.container(border=True):
                 st.subheader(t("compare.trend_7d_title"))
+                st.caption(t("compare.trend_7d_caption"))
                 fig = px.line(
                     df_trend, x="full_date", y="avg_aqi", color="city_name",
                     markers=True,
@@ -163,6 +166,7 @@ try:
         if not df_current.empty:
             with st.container(border=True):
                 st.subheader(t("compare.ranking"))
+                st.caption(t("compare.ranking_caption"))
                 st.dataframe(
                     translate_df(df_current.reset_index(drop=True)),
                     use_container_width=True,

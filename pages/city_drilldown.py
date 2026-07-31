@@ -53,10 +53,11 @@ try:
     with col1:
         with st.container(border=True):
             st.subheader(t("drill.current_aqi_city", city=city))
+            st.caption(t("drill.current_aqi_city_caption"))
             df_current = city_current_aqi(city)
             df_weekly = city_weekly_aqi(city)
 
-            aqi_val = int(df_current["aqi"].iloc[0]) if not df_current.empty else 0
+            aqi_val = int(round(df_current["aqi"].iloc[0])) if not df_current.empty else 0
             st.metric(t("drill.right_now"), aqi_val)
 
             if not df_weekly.empty:
@@ -72,6 +73,7 @@ try:
     with col2:
         with st.container(border=True):
             st.subheader(t("drill.vs_national", city=city))
+            st.caption(t("drill.vs_national_caption"))
             df_comp = city_vs_national(city)
             if not df_comp.empty:
                 fig = px.bar(df_comp, x="metric", y=["city_val", "national_val"],
@@ -89,6 +91,7 @@ try:
     # ─── Row 2: Hourly Profile ───
     with st.container(border=True):
         st.subheader(t("drill.hourly_profile", city=city))
+        st.caption(t("drill.hourly_profile_caption"))
         df_hourly = city_hourly_profile(city, period)
         exports["hourly_profile"] = df_hourly
         if not df_hourly.empty:
@@ -103,6 +106,7 @@ try:
 
     # ─── Row 3: All Pollutants Time Series ───
     with st.expander(t("drill.all_pollutants"), expanded=False):
+        st.caption(t("drill.all_pollutants_caption"))
         df_poll = city_all_pollutants(city, period)
         exports["all_pollutants"] = df_poll
         if not df_poll.empty:
@@ -117,7 +121,7 @@ try:
     # ─── Pollutants vs WHO thresholds ───
     with st.container(border=True):
         st.subheader(t("drill.who_thresholds_city", city=city))
-        st.caption(t("drill.who_caption"))
+        st.caption(t("drill.who_thresholds_city_caption"))
         df_who = city_pollutant_timeseries(city, period)
         exports["pollutants_vs_who"] = df_who
         if not df_who.empty:
@@ -134,7 +138,7 @@ try:
             for c, thr in thresholds.items():
                 fig.add_hline(
                     y=thr, line_dash="dash", line_color=colors[c], opacity=0.7,
-                    annotation_text=f"{c} WHO {thr}",
+                    annotation_text=t("drill.who_hline", pollutant=c.upper(), threshold=thr),
                 )
             fig = style_plotly_chart(fig)
             st.plotly_chart(fig, use_container_width=True)
@@ -143,6 +147,7 @@ try:
 
     # ─── Row 4: Worst Episodes ───
     with st.expander(t("drill.worst_episodes"), expanded=False):
+        st.caption(t("drill.worst_episodes_caption"))
         df_worst = city_worst_episodes(city, period)
         exports["worst_episodes"] = df_worst
         if not df_worst.empty:

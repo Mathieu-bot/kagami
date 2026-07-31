@@ -112,6 +112,18 @@ STRINGS = {
         "hq.attention_no_alerts": "✅ Aucune ville en alerte — bonne qualité de l'air",
         "hq.attention_gap": "⚠️ {pct}% de complétude des données — vérifier le pipeline",
 
+        # ── HQ captions (panel descriptions) ──
+        "hq.aqi_today_caption": "_Moyenne de l'indice sur les 24 dernières heures, comparée à hier_",
+        "hq.cities_in_alert_caption": "_Villes dont l'AQI a atteint le niveau d'alerte (≥ 3) aujourd'hui_",
+        "hq.data_completeness_caption": "_Part des mesures attendues réellement reçues aujourd'hui_",
+        "hq.days_without_alert_caption": "_Jours consécutifs sans aucun épisode d'alerte_",
+        "hq.aqi_evolution_caption": "_Moyenne journalière nationale avec tendance mobile sur 7 jours_",
+        "hq.aqi_map_caption": "_Dernière lecture de chaque ville, positionnée sur la carte_",
+        "hq.aqi_distribution_caption": "_Répartition des mesures par niveau d'indice sur la période_",
+        "hq.worst_pollutant_caption": "_Polluant le plus proche de sa limite OMS sur la période_",
+        "hq.who_exceedance_caption": "_Part des mesures dépassant au moins une limite OMS_",
+        "hq.pipeline_health_caption": "_Fraîcheur des données et dernier enregistrement reçu_",
+
         # ── City Drill-down ──
         "drill.title": "🏙️ Détail par ville",
         "drill.caption": "_Analyse détaillée d'une ville spécifique_",
@@ -128,6 +140,15 @@ STRINGS = {
         "drill.no_bad_episodes": "✅ Aucun mauvais épisode sur cette période !",
         "drill.status_alert": "Alerte",
         "drill.status_who_pm25": "OMS PM2.5",
+        "drill.who_hline": "OMS {pollutant} {threshold} µg/m³",
+
+        # ── Drill captions (panel descriptions) ──
+        "drill.current_aqi_city_caption": "_Valeur la plus récente et tendance 7 jours de la ville_",
+        "drill.vs_national_caption": "_Moyennes 30 jours de la ville comparées aux moyennes nationales_",
+        "drill.hourly_profile_caption": "_Rythme moyen de la pollution selon l'heure de la journée_",
+        "drill.all_pollutants_caption": "_Évolution horaire de chaque polluant sur la période_",
+        "drill.who_thresholds_city_caption": "_Concentrations journalières avec les lignes directrices OMS 24h_",
+        "drill.worst_episodes_caption": "_Les 20 pires moments de la ville sur la période_",
 
         # ── Deep Analysis ──
         "deep.title": "🔬 Analyse approfondie",
@@ -151,6 +172,11 @@ STRINGS = {
         "deep.correlation": "Corrélation",
         "deep.hour": "Heure",
         "deep.day": "Jour",
+
+        # ── Deep analysis captions ──
+        "deep.monthly_stats_caption": "_Distribution statistique de l'AQI mois par mois_",
+        "deep.seasonal_caption": "_Comparaison saison sèche vs saison des pluies_",
+        "deep.weekday_weekend_caption": "_Différence de pollution entre semaine et week-end_",
 
         # ── City Comparison ──
         "compare.title": "⚖️ Comparateur de villes",
@@ -176,6 +202,12 @@ STRINGS = {
         "compare.avg_this_week": "Moyenne sur 7 jours",
         "compare.same_city": "⚠️ Choisissez deux villes différentes pour comparer.",
 
+        # ── Compare captions ──
+        "compare.current_aqi_caption": "_Dernière valeur moyenne d'indice par ville_",
+        "compare.trend_7d_caption": "_Moyenne journalière par ville, seuil d'alerte en pointillé_",
+        "compare.pollutant_compare_caption": "_Moyenne sur 7 jours des principaux polluants_",
+        "compare.ranking_caption": "_Classement des villes par indice actuel_",
+
         # ── Alerts / Control room ──
         "alerts.title": "🚨 Salle de contrôle & alertes",
         "alerts.caption": "_Historique des épisodes où l'AQI a atteint le niveau d'alerte (≥ 3)_",
@@ -195,6 +227,10 @@ STRINGS = {
         "alerts.offline": "Hors ligne",
         "alerts.no_control_data": "Aucune donnée temps réel disponible.",
 
+        # ── Alerts captions ──
+        "alerts.alerts_per_city_caption": "_Nombre d'alertes par ville sur la période_",
+        "alerts.recent_episodes_caption": "_Détail des épisodes récents (100 derniers)_",
+
         # ── Forecast ──
         "forecast.title": "🔮 Prévision AQI",
         "forecast.caption": "_Prévision AQI sur 7 jours par ville (ARIMA, avec repli moyenne mobile)_",
@@ -211,6 +247,9 @@ STRINGS = {
         "forecast.forecast_series": "Prévision",
         "forecast.details": "🗓️ Détails de la prévision",
         "forecast.ci": "IC 80%",
+
+        # ── Forecast captions ──
+        "forecast.history_forecast_caption": "_Historique observé et prévision sur 7 jours avec intervalle de confiance_",
 
         # ── Pipeline Monitor ──
         "pipeline.title": "⚙️ Monitoring technique",
@@ -229,6 +268,13 @@ STRINGS = {
         "pipeline.no_missing": "✅ Aucune donnée manquante sur les 24 dernières heures",
         "pipeline.complete": "Complet",
         "pipeline.missing": "Manquant",
+
+        # ── Pipeline captions ──
+        "pipeline.status_caption": "_Retard entre le dernier enregistrement reçu et maintenant_",
+        "pipeline.last_ingestion_caption": "_Horodatage du tout dernier enregistrement_",
+        "pipeline.data_completeness_caption": "_Part des mesures attendues reçues aujourd'hui_",
+        "pipeline.records_per_day_caption": "_Volume d'enregistrements reçus par jour_",
+        "pipeline.missing_data_caption": "_Combinaisons date/heure/ville sans mesure_",
 
         # ── User Management ──
         "users.title": "👥 Gestion des utilisateurs",
@@ -265,6 +311,7 @@ STRINGS = {
         "explorer.read_only": "⛔ Seules les requêtes en lecture seule (SELECT / WITH / EXPLAIN) sont autorisées.",
         "explorer.running": "Exécution de la requête...",
         "explorer.rows": "✅ {n} ligne(s) renvoyée(s).",
+        "explorer.single_statement": "Une seule instruction est autorisée — les points-virgules sont rejetés.",
 
         # ── Citizens page ──
         "citizens.title": "🏥 Info citoyens & santé publique",
@@ -283,6 +330,13 @@ STRINGS = {
         "citizens.who_health_caption": "_Pourcentage de jours où la concentration dépasse la ligne directrice OMS 24h (7 derniers jours)_",
         "citizens.realtime": "🟢 Qualité de l'air en ce moment",
         "citizens.realtime_caption": "_Badges en direct pour chaque ville (mise à jour manuelle via rechargement)_",
+        "citizens.no_live_data": "Aucune donnée temps réel disponible.",
+
+        # ── Citizens captions ──
+        "citizens.understand_aqi_caption": "_Ce que signifie l'indice de qualité de l'air_",
+        "citizens.what_to_do_caption": "_Les recommandations pour chaque niveau d'indice_",
+        "citizens.vulnerable_caption": "_Qui est le plus exposé à la pollution de l'air_",
+        "citizens.pollutants_caption": "_Les principaux polluants suivis par le réseau_",
         "citizens.aqi_good": "Bon",
         "citizens.aqi_moderate": "Modéré",
         "citizens.aqi_unhealthy": "Mauvais pour la santé",
@@ -397,6 +451,18 @@ STRINGS = {
         "hq.attention_no_alerts": "✅ No city in alert — good air quality",
         "hq.attention_gap": "⚠️ {pct}% data completeness — check the pipeline",
 
+        # ── HQ captions (panel descriptions) ──
+        "hq.aqi_today_caption": "_Average index over the last 24 hours, compared to yesterday_",
+        "hq.cities_in_alert_caption": "_Cities whose AQI reached alert level (≥ 3) today_",
+        "hq.data_completeness_caption": "_Share of expected readings actually received today_",
+        "hq.days_without_alert_caption": "_Consecutive days without any alert episode_",
+        "hq.aqi_evolution_caption": "_National daily average with a 7-day moving average_",
+        "hq.aqi_map_caption": "_Latest reading of each city, placed on the map_",
+        "hq.aqi_distribution_caption": "_Distribution of readings by index level over the period_",
+        "hq.worst_pollutant_caption": "_Pollutant closest to its WHO limit over the period_",
+        "hq.who_exceedance_caption": "_Share of readings exceeding at least one WHO limit_",
+        "hq.pipeline_health_caption": "_Data freshness and last received record_",
+
         # ── City Drill-down ──
         "drill.title": "🏙️ City Drill-down",
         "drill.caption": "_Detailed analysis for a specific city_",
@@ -413,6 +479,15 @@ STRINGS = {
         "drill.no_bad_episodes": "✅ No bad episodes in this period!",
         "drill.status_alert": "Alert",
         "drill.status_who_pm25": "WHO PM2.5",
+        "drill.who_hline": "WHO {pollutant} {threshold} µg/m³",
+
+        # ── Drill captions (panel descriptions) ──
+        "drill.current_aqi_city_caption": "_Most recent value and 7-day trend for the city_",
+        "drill.vs_national_caption": "_30-day city averages compared with national averages_",
+        "drill.hourly_profile_caption": "_Average pollution rhythm by hour of day_",
+        "drill.all_pollutants_caption": "_Hourly evolution of each pollutant over the period_",
+        "drill.who_thresholds_city_caption": "_Daily concentrations with the WHO 24h guidelines_",
+        "drill.worst_episodes_caption": "_The 20 worst moments for the city over the period_",
 
         # ── Deep Analysis ──
         "deep.title": "🔬 Deep Analysis",
@@ -436,6 +511,11 @@ STRINGS = {
         "deep.correlation": "Correlation",
         "deep.hour": "Hour",
         "deep.day": "Day",
+
+        # ── Deep analysis captions ──
+        "deep.monthly_stats_caption": "_Statistical distribution of AQI month by month_",
+        "deep.seasonal_caption": "_Dry season vs wet season comparison_",
+        "deep.weekday_weekend_caption": "_Pollution difference between weekdays and weekends_",
 
         # ── City Comparison ──
         "compare.title": "⚖️ City Comparison",
@@ -461,6 +541,12 @@ STRINGS = {
         "compare.avg_this_week": "7-day average",
         "compare.same_city": "⚠️ Pick two different cities to compare.",
 
+        # ── Compare captions ──
+        "compare.current_aqi_caption": "_Latest average index per city_",
+        "compare.trend_7d_caption": "_Daily average per city, alert threshold in dashed line_",
+        "compare.pollutant_compare_caption": "_7-day average of the main pollutants_",
+        "compare.ranking_caption": "_City ranking by current index_",
+
         # ── Alerts / Control room ──
         "alerts.title": "🚨 Alerts & Control Room",
         "alerts.caption": "_History of episodes where AQI reached alert level (≥ 3)_",
@@ -480,6 +566,10 @@ STRINGS = {
         "alerts.offline": "Offline",
         "alerts.no_control_data": "No real-time data available.",
 
+        # ── Alerts captions ──
+        "alerts.alerts_per_city_caption": "_Number of alerts per city over the period_",
+        "alerts.recent_episodes_caption": "_Details of recent episodes (last 100)_",
+
         # ── Forecast ──
         "forecast.title": "🔮 AQI Forecast",
         "forecast.caption": "_7-day AQI forecast per city (ARIMA, with moving-average fallback)_",
@@ -496,6 +586,9 @@ STRINGS = {
         "forecast.forecast_series": "Forecast",
         "forecast.details": "🗓️ Forecast Details",
         "forecast.ci": "80% CI",
+
+        # ── Forecast captions ──
+        "forecast.history_forecast_caption": "_Observed history and 7-day forecast with confidence interval_",
 
         # ── Pipeline Monitor ──
         "pipeline.title": "⚙️ Pipeline Monitor",
@@ -514,6 +607,13 @@ STRINGS = {
         "pipeline.no_missing": "✅ No missing data in the last 24 hours",
         "pipeline.complete": "Complete",
         "pipeline.missing": "Missing",
+
+        # ── Pipeline captions ──
+        "pipeline.status_caption": "_Delay between the last received record and now_",
+        "pipeline.last_ingestion_caption": "_Timestamp of the very last record_",
+        "pipeline.data_completeness_caption": "_Share of expected readings received today_",
+        "pipeline.records_per_day_caption": "_Volume of records received per day_",
+        "pipeline.missing_data_caption": "_Date/hour/city combinations without a reading_",
 
         # ── User Management ──
         "users.title": "👥 User Management",
@@ -550,6 +650,7 @@ STRINGS = {
         "explorer.read_only": "⛔ Only read-only queries (SELECT / WITH / EXPLAIN) are allowed.",
         "explorer.running": "Running query...",
         "explorer.rows": "✅ {n} row(s) returned.",
+        "explorer.single_statement": "Only one statement is allowed — semicolons are rejected.",
 
         # ── Citizens page ──
         "citizens.title": "🏥 Citizens & Health Info",
@@ -568,6 +669,13 @@ STRINGS = {
         "citizens.who_health_caption": "_Share of days where the concentration exceeds the WHO 24h guideline (last 7 days)_",
         "citizens.realtime": "🟢 Live air quality",
         "citizens.realtime_caption": "_Live badges for each city (refresh to update)_",
+        "citizens.no_live_data": "No real-time data available.",
+
+        # ── Citizens captions ──
+        "citizens.understand_aqi_caption": "_What the air quality index means_",
+        "citizens.what_to_do_caption": "_Recommendations for each index level_",
+        "citizens.vulnerable_caption": "_Who is most exposed to air pollution_",
+        "citizens.pollutants_caption": "_The main pollutants tracked by the network_",
         "citizens.aqi_good": "Good",
         "citizens.aqi_moderate": "Moderate",
         "citizens.aqi_unhealthy": "Unhealthy",
@@ -611,6 +719,11 @@ COLUMN_LABELS = {
         "day_of_week": "Jour", "day_type": "Type de jour", "season": "Saison",
         "avg_pm25": "Moy. PM2.5", "avg_pm10": "Moy. PM10", "avg_o3": "Moy. O₃",
         "avg_no2": "Moy. NO₂", "time": "Heure",
+        "exceedance_rate": "Taux de dépassement", "measurements": "Mesures",
+        "current": "Actuel", "prediction": "Prévision",
+        "upper_bound": "Borne haute", "lower_bound": "Borne basse",
+        "value": "Valeur", "name": "Nom", "label": "Libellé",
+        "pollutant": "Polluant",
     },
     "en": {
         "city_name": "City", "full_date": "Date", "hour": "Hour", "aqi": "AQI",
@@ -632,6 +745,11 @@ COLUMN_LABELS = {
         "day_of_week": "Day", "day_type": "Day type", "season": "Season",
         "avg_pm25": "Avg PM2.5", "avg_pm10": "Avg PM10", "avg_o3": "Avg O₃",
         "avg_no2": "Avg NO₂", "time": "Time",
+        "exceedance_rate": "Exceedance rate", "measurements": "Measurements",
+        "current": "Current", "prediction": "Forecast",
+        "upper_bound": "Upper bound", "lower_bound": "Lower bound",
+        "value": "Value", "name": "Name", "label": "Label",
+        "pollutant": "Pollutant",
     },
 }
 

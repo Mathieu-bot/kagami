@@ -12,7 +12,7 @@ from queries import (
     records_per_day,
     data_gaps,
 )
-from utils.charts import style_plotly_chart
+from utils.charts import style_plotly_chart, pipeline_status_label
 from i18n import t, col, translate_df
 
 # ─── Page config (must be first) ───
@@ -37,20 +37,17 @@ try:
     with col1:
         with st.container(border=True):
             st.subheader(t("pipeline.status"))
+            st.caption(t("pipeline.status_caption"))
             df_status = pipeline_status()
             if not df_status.empty:
                 row = df_status.iloc[0]
-                emoji = {"Up to date": "🟢", "Delayed": "🟡", "Critical": "🔴"}
-                label = {
-                    "Up to date": t("hq.status_up_to_date"),
-                    "Delayed": t("hq.status_delayed"),
-                    "Critical": t("hq.status_critical"),
-                }
-                st.metric(col("status"), f"{emoji.get(row['status'], '❓')} {label.get(row['status'], row['status'])}")
+                emoji, label = pipeline_status_label(row["status"])
+                st.metric(col("status"), f"{emoji} {label}")
 
     with col2:
         with st.container(border=True):
             st.subheader(t("pipeline.last_ingestion"))
+            st.caption(t("pipeline.last_ingestion_caption"))
             df_last = last_ingestion()
             if not df_last.empty:
                 st.metric(t("pipeline.last_record"), df_last["last_record"].iloc[0])
@@ -58,15 +55,17 @@ try:
     with col3:
         with st.container(border=True):
             st.subheader(t("pipeline.data_completeness"))
+            st.caption(t("pipeline.data_completeness_caption"))
             df_comp = data_completeness()
             if not df_comp.empty:
-                comp = df_comp["completeness"].iloc[0]
+                comp = float(df_comp["completeness"].iloc[0])
                 st.metric(t("pipeline.today"), f"{comp}%")
                 st.progress(min(comp, 100) / 100)
 
     # ─── Panel 4.2 — Records per Day ───
     with st.container(border=True):
         st.subheader(t("pipeline.records_per_day"))
+        st.caption(t("pipeline.records_per_day_caption"))
         df_records = records_per_day()
         if not df_records.empty:
             fig = px.bar(df_records, x="full_date", y="records",
@@ -79,6 +78,7 @@ try:
     # ─── Panel 4.3 — Data Gaps ───
     with st.container(border=True):
         st.subheader(t("pipeline.missing_data"))
+        st.caption(t("pipeline.missing_data_caption"))
         df_gaps = data_gaps()
         if not df_gaps.empty:
             missing = df_gaps[df_gaps["status"] == "Missing"]
