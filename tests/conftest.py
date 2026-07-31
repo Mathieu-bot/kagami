@@ -65,7 +65,6 @@ def mock_streamlit():
         "streamlit.multiselect", "streamlit.radio", "streamlit.dataframe",
         "streamlit.plotly_chart", "streamlit.expander", "streamlit.container",
         "streamlit.columns", "streamlit.sidebar", "streamlit.spinner",
-        "streamlit.cache_data", "streamlit.cache_resource",
         "streamlit.page_link", "streamlit.title", "streamlit.set_page_config",
         "streamlit.rerun", "streamlit.link_button", "streamlit.form",
         "streamlit.text_input", "streamlit.download_button", "streamlit.date_input",
@@ -80,6 +79,19 @@ def mock_streamlit():
         stack.enter_context(patch("streamlit.checkbox", return_value=False))
         # st.stop() halts the page, exactly like the real runtime.
         stack.enter_context(patch("streamlit.stop", side_effect=StopPage))
+
+        def _cache_pass(*args, **kwargs):
+            """Mimic @st.cache_data/@st.cache_resource: return the function
+            unchanged so tests exercise the real code path (no caching)."""
+            if args and callable(args[0]):
+                return args[0]
+
+            def _decorator(func):
+                return func
+            return _decorator
+
+        stack.enter_context(patch("streamlit.cache_data", side_effect=_cache_pass))
+        stack.enter_context(patch("streamlit.cache_resource", side_effect=_cache_pass))
 
         def _fragment(*args, **kwargs):
             """Mimic @st.fragment: return the wrapped function unchanged."""
