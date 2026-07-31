@@ -14,6 +14,14 @@ from queries import (
 )
 from utils.charts import style_plotly_chart
 
+# ─── Page config (must be first) ───
+st.set_page_config(
+    page_title="Kagami — Pipeline Monitor",
+    page_icon="⚙️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 init_session_state()
 require_role("admin")
 render_sidebar()

@@ -18,6 +18,14 @@ from queries import (
 )
 from utils.charts import style_plotly_chart
 
+# ─── Page config (must be first) ───
+st.set_page_config(
+    page_title="Kagami — Deep Analysis",
+    page_icon="🔬",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 init_session_state()
 require_role("analyst")
 render_sidebar()
