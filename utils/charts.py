@@ -13,6 +13,12 @@ import plotly.graph_objects as go
 # Trace colors shared across pages (AQI scale + accents).
 AQI_COLORS = ["#00E400", "#FFFF00", "#FF7E00", "#FF0000", "#7E0023"]
 
+# Modern, colorblind-friendly accent palette for multi-series charts.
+CHART_COLORWAY = ["#1E88E5", "#D81B60", "#43A047", "#F4511E",
+                  "#8E24AA", "#00897B", "#FDD835", "#5E35B1"]
+
+GRID_COLOR = "rgba(0,0,0,0.06)"
+
 
 def style_plotly_chart(fig, title=None, height=None, hovermode="x unified"):
     """Apply consistent styling to a Plotly chart.
@@ -45,6 +51,14 @@ def style_plotly_chart(fig, title=None, height=None, hovermode="x unified"):
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         font=dict(size=12),
+        colorway=CHART_COLORWAY,
+        xaxis=dict(showgrid=True, gridcolor=GRID_COLOR, zeroline=False),
+        yaxis=dict(showgrid=True, gridcolor=GRID_COLOR, zeroline=False),
+        hoverlabel=dict(
+            bgcolor="white",
+            bordercolor="rgba(0,0,0,0.2)",
+            font=dict(size=12, color="#333"),
+        ),
     )
     fig.update_layout(**layout)
     return fig
@@ -157,15 +171,17 @@ def _freshness(ts) -> str:
 
 
 def pipeline_status_label(status: str) -> tuple:
-    """Return ``(emoji, translated_label)`` for a pipeline status."""
+    """Return ``(material_icon, translated_label)`` for a pipeline status."""
     from i18n import t
-    emoji = {"Up to date": "🟢", "Delayed": "🟡", "Critical": "🔴"}
+    icons = {"Up to date": ":material/check_circle:",
+             "Delayed": ":material/schedule:",
+             "Critical": ":material/error:"}
     label = {
         "Up to date": t("hq.status_up_to_date"),
         "Delayed": t("hq.status_delayed"),
         "Critical": t("hq.status_critical"),
     }
-    return emoji.get(status, "❓"), label.get(status, status)
+    return icons.get(status, ":material/help:"), label.get(status, status)
 
 
 def aqi_level_label(aqi_value: int, lang: str = None) -> str:

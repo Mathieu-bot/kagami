@@ -8,7 +8,7 @@ def csv_download(df, label: str, filename: str):
     if df is None or df.empty:
         return
     st.download_button(
-        label=f"⬇️ {label}",
+        label=f":material/download: {label}",
         data=df.to_csv(index=False).encode("utf-8"),
         file_name=filename,
         mime="text/csv",
