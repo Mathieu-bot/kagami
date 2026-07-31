@@ -2,7 +2,7 @@
 
 import streamlit as st
 import plotly.express as px
-from auth import init_session_state
+from auth import init_session_state, require_role
 from sidebar import render_sidebar
 from queries import (
     pipeline_status,
@@ -14,6 +14,7 @@ from queries import (
 from utils.charts import style_plotly_chart
 
 init_session_state()
+require_role("admin")
 render_sidebar()
 
 st.title("⚙️ Pipeline Monitor")
