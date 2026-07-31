@@ -108,7 +108,12 @@ def test_caddy_serves_landing_at_root():
 
 def test_caddy_forwards_oauth_callback_to_app():
     caddy = _read(CADDYFILE)
-    assert "@oauth query oauth=callback" in caddy
+    # The matcher is scoped to the root path: a callback already inside the
+    # app (/aqi/?oauth=callback) must NOT match, or Caddy would redirect it
+    # to itself in an infinite loop (breaks Google sign-in).
+    assert "@oauth {" in caddy
+    assert "path /" in caddy
+    assert "query oauth=callback" in caddy
     assert "redir @oauth /aqi/?{query} 302" in caddy
 
 
@@ -123,6 +128,20 @@ def test_caddy_old_direct_root_redirect_removed():
     caddy = _read(CADDYFILE)
     assert "@root" not in caddy
     assert "redir @root" not in caddy
+
+
+def test_caddy_oauth_matcher_is_scoped_to_root():
+    # Regression guard: an unscoped "@oauth query oauth=callback" would also
+    # match /aqi/?oauth=callback, and Caddy would re-redirect the app's own
+    # callback to itself forever — breaking Google sign-in.
+    caddy = _read(CADDYFILE)
+    oauth_block = caddy.split("@oauth")[1].split("}")[0]
+    assert "path /" in oauth_block, (
+        "OAuth matcher must be scoped to the root path, "
+        "otherwise /aqi/?oauth=callback loops forever"
+    )
+    # The bare inline form ("@oauth query ...") must not be used.
+    assert "@oauth query oauth=callback" not in caddy
 
 
 def test_caddy_root_points_at_deploy_dir():

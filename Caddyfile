@@ -12,8 +12,13 @@ kagami.tafita.online {
 	# Google OAuth is registered against the ROOT URL
 	# (https://kagami.tafita.online/?oauth=callback). The root now serves
 	# the landing page, so forward the callback to the app while preserving
-	# the query string.
-	@oauth query oauth=callback
+	# the query string. The path guard keeps the matcher scoped to the root:
+	# without it, a callback already inside the app (/aqi/?oauth=callback)
+	# would also match and Caddy would redirect it to itself in a loop.
+	@oauth {
+		path /
+		query oauth=callback
+	}
 	redir @oauth /aqi/?{query} 302
 
 	# AQI dashboard (Streamlit, baseUrlPath="aqi").
