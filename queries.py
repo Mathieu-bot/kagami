@@ -531,3 +531,36 @@ def city_pollutant_timeseries(city_name: str, period: str = "30d"):
         GROUP BY d.full_date
         ORDER BY d.full_date
     """, {"city_name": city_name, "interval": interval})
+
+
+# ─── Dashboard: Alerts History ───
+
+def alert_episodes(days: int = 90):
+    """Recent alert episodes (AQI >= 3) across cities."""
+    return query("""
+        SELECT c.city_name, d.full_date, d.hour, f.aqi,
+               CASE WHEN f.aqi >= 4 THEN 'Severe'
+                    WHEN f.aqi >= 3 THEN 'Alert'
+                    ELSE 'Moderate' END AS level
+        FROM fact_aqi f
+        JOIN dim_city c ON c.city_key = f.city_key
+        JOIN dim_date d ON f.date_key = d.date_key
+        WHERE f.aqi >= 3 AND d.full_date >= CURRENT_DATE - (:days || ' days')::interval
+        ORDER BY d.full_date DESC, d.hour DESC, c.city_name
+    """, {"days": days})
+
+
+def alert_summary(days: int = 90):
+    """Alerts per city: count, worst AQI, and number of affected days."""
+    return query("""
+        SELECT c.city_name,
+               COUNT(*) AS alert_count,
+               MAX(f.aqi) AS max_aqi,
+               COUNT(DISTINCT d.full_date) AS affected_days
+        FROM fact_aqi f
+        JOIN dim_city c ON c.city_key = f.city_key
+        JOIN dim_date d ON f.date_key = d.date_key
+        WHERE f.aqi >= 3 AND d.full_date >= CURRENT_DATE - (:days || ' days')::interval
+        GROUP BY c.city_name
+        ORDER BY alert_count DESC
+    """, {"days": days})

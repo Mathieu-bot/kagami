@@ -26,6 +26,8 @@ PAGES = {
         os.path.dirname(__file__), "..", "..", "pages", "user_management.py"),
     "city_comparison": os.path.join(
         os.path.dirname(__file__), "..", "..", "pages", "city_comparison.py"),
+    "alerts_history": os.path.join(
+        os.path.dirname(__file__), "..", "..", "pages", "alerts_history.py"),
 }
 
 
@@ -63,6 +65,9 @@ def mega_dataframe():
         "month": ["2026-07", "2026-07"],
         "hour": [8, 9],
         "day_of_week": ["Monday", "Tuesday"],
+        "max_aqi": [3, 4],
+        "affected_days": [1, 2],
+        "level": ["Alert", "Severe"],
         "pm2_5": [12.0, 20.0],
         "pm10": [20.0, 30.0],
         "no2": [8.0, 9.0],
