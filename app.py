@@ -117,19 +117,9 @@ def render_executive_summary(period: str = "7d", cities: list = None):
         st.markdown(f"- {point}")
 
 
-try:
-    # ─── Page content ───
-    st.title(t("hq.title"))
-    st.caption(t("hq.caption"))
-
-    # ─── Local filters (this page only) ───
-    with st.expander(t("common.filters"), expanded=False):
-        period = filters.period_selector(key="hq_period", default="7d")
-        df_city_opt = list_cities()
-        city_options = df_city_opt["city_name"].tolist() if not df_city_opt.empty else []
-        filters.cities_multiselect(city_options, key="hq_cities")
-    selected_cities = filters.selected("hq_cities")
-
+@st.fragment(run_every=30)
+def render_kpi_row():
+    """Live KPI panels — auto-refreshed every 30s without a full page rerun."""
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         df_aqi = aqi_today()
@@ -171,6 +161,22 @@ try:
         with st.container(border=True, key="panel_hq_days_alert"):
             st.metric(t("hq.days_without_alert"), days)
             st.caption(t("hq.days_without_alert_caption"))
+
+
+try:
+    # ─── Page content ───
+    st.title(t("hq.title"))
+    st.caption(t("hq.caption"))
+
+    # ─── Local filters (this page only) ───
+    with st.expander(t("common.filters"), expanded=False):
+        period = filters.period_selector(key="hq_period", default="7d")
+        df_city_opt = list_cities()
+        city_options = df_city_opt["city_name"].tolist() if not df_city_opt.empty else []
+        filters.cities_multiselect(city_options, key="hq_cities")
+    selected_cities = filters.selected("hq_cities")
+
+    render_kpi_row()
 
     with st.container(border=True, key="panel_hq_aqi_evolution"):
         st.subheader(t("hq.aqi_evolution"))
