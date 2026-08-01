@@ -131,6 +131,7 @@ STRINGS = {
         "drill.worst_episodes_caption": "_Les 20 pires moments de la ville sur {period}_",
         "drill.trace_title": "Polluants traces (SO₂, CO, NH₃)",
         "drill.trace_caption": "_Moyennes journalières sur {period}, à leur propre échelle. Valeurs bien en dessous des lignes directrices OMS._",
+        "drill.trace_co_note": "CO affiché en **µg/m³** (seuil OMS 4000 µg/m³) — certaines sources l'expriment en mg/m³.",
 
         # ── Deep Analysis ──
         "deep.title": "Analyse approfondie",        "deep.caption": "_Conforme EDA : statistiques, valeurs aberrantes, corrélations, multi-dimensionnel_",
@@ -288,6 +289,17 @@ STRINGS = {
         "citizens.advice_4": "Évitez toute activité en extérieur. Fermez les fenêtres et utilisez un masque si vous devez sortir.",
         "citizens.advice_5": "Restez à l'intérieur, portez un masque en extérieur, aérez peu et suivez les consignes des autorités.",
 
+        # ── Citizens: best hour + data notes ──
+        "citizens.best_hour": "Le meilleur moment pour sortir",
+        "citizens.best_hour_caption": "_Heure moyenne la moins polluée par ville, sur {period}_",
+        "citizens.best_hour_no_data": "Pas encore assez de données pour calculer la meilleure heure.",
+        "citizens.data_notes": "À propos de ces données",
+        "citizens.data_notes_caption": "_Limites et précisions à garder en tête (voir le notebook EDA)_",
+        "citizens.note_aqi_scale": "**Échelle de l'AQI.** Notre indice va de 1 (excellent) à 5 (dangereux) — il ne s'agit pas de l'AQI d'IQAir (0 à 500). Les deux s'appellent AQI mais ne mesurent pas la même chose de la même façon.",
+        "citizens.note_co_unit": "**Unité du CO.** Le monoxyde de carbone est affiché en µg/m³ (seuil OMS : 4000 µg/m³), alors que de nombreuses sources l'expriment en mg/m³. Vérifiez l'unité avant de comparer.",
+        "citizens.note_satellite": "**Estimation satellite.** Pour les villes sans station au sol, certaines valeurs proviennent d'une estimation par satellite, qui lisse les pics très locaux (embouteillages, feux).",
+        "citizens.note_no": "**Le monoxyde d'azote (NO) n'est pas affiché.** La colonne NO existe dans les données mais n'est volontairement pas modélisée dans le dashboard.",
+
         # ── AQI levels ──
         "level.good": "Bon",
         "level.moderate": "Modéré",
@@ -397,6 +409,7 @@ STRINGS = {
         "drill.worst_episodes_caption": "_The 20 worst moments for the city over {period}_",
         "drill.trace_title": "Trace Pollutants (SO₂, CO, NH₃)",
         "drill.trace_caption": "_Daily averages over {period}, on their own scale. Values far below WHO guidelines._",
+        "drill.trace_co_note": "CO is shown in **µg/m³** (WHO guideline 4000 µg/m³) — many sources express it in mg/m³.",
 
         # ── Deep Analysis ──
         "deep.title": "Deep Analysis",        "deep.caption": "_EDA-compliant: statistics, outliers, correlations, multi-dimensional_",
@@ -554,6 +567,17 @@ STRINGS = {
         "citizens.advice_4": "Avoid all outdoor activity. Close windows and wear a mask if you must go out.",
         "citizens.advice_5": "Stay indoors, wear a mask outdoors, ventilate little and follow official advice.",
 
+        # ── Citizens: best hour + data notes ──
+        "citizens.best_hour": "The best time to go out",
+        "citizens.best_hour_caption": "_Average least-polluted hour per city, over {period}_",
+        "citizens.best_hour_no_data": "Not enough data yet to compute the best hour.",
+        "citizens.data_notes": "About the data",
+        "citizens.data_notes_caption": "_Limits and caveats to keep in mind (see the EDA notebook)_",
+        "citizens.note_aqi_scale": "**AQI scale.** Our index runs from 1 (excellent) to 5 (hazardous) — this is not IQAir's AQI (0–500). Both are called AQI but measure different things in different ways.",
+        "citizens.note_co_unit": "**CO unit.** Carbon monoxide is displayed in µg/m³ (WHO guideline: 4000 µg/m³), while many sources express it in mg/m³. Check the unit before comparing.",
+        "citizens.note_satellite": "**Satellite estimates.** For cities without a ground station, some values likely come from satellite estimation, which smooths very local peaks (traffic, fires).",
+        "citizens.note_no": "**Nitrogen monoxide (NO) is not displayed.** The NO column exists in the data but is intentionally not modeled in the dashboard.",
+
         # ── AQI levels ──
         "level.good": "Good",
         "level.moderate": "Moderate",
@@ -567,7 +591,7 @@ STRINGS = {
 # ─── DataFrame column headers ───
 COLUMN_LABELS = {
     "fr": {
-        "city_name": "Ville", "full_date": "Date", "hour": "Heure", "aqi": "AQI",
+        "city_name": "Ville", "full_date": "Date", "hour": "Heure", "best_hour": "Meilleure heure", "aqi": "AQI",
         "current_aqi": "AQI actuel", "avg_aqi": "AQI moyen", "daily_avg": "Moyenne journalière",
         "yesterday_avg": "Moyenne hier", "trend": "Tendance",
         "alert_count": "Nb d'alertes", "max_aqi": "AQI max", "affected_days": "Jours touchés",
@@ -593,7 +617,7 @@ COLUMN_LABELS = {
         "pollutant": "Polluant",
     },
     "en": {
-        "city_name": "City", "full_date": "Date", "hour": "Hour", "aqi": "AQI",
+        "city_name": "City", "full_date": "Date", "hour": "Hour", "best_hour": "Best hour", "aqi": "AQI",
         "current_aqi": "Current AQI", "avg_aqi": "Average AQI", "daily_avg": "Daily average",
         "yesterday_avg": "Yesterday avg", "trend": "Trend",
         "alert_count": "Alerts", "max_aqi": "Max AQI", "affected_days": "Affected days",
