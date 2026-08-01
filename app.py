@@ -198,6 +198,9 @@ try:
             if selected_cities and not df_map.empty and "city_name" in df_map.columns:
                 df_map = df_map[df_map["city_name"].isin(selected_cities)]
             if not df_map.empty:
+                # Unified, language-aware 5-level AQI status (computed here,
+                # not in SQL — see queries.air_quality_map).
+                df_map["status"] = df_map["aqi"].apply(aqi_level_label)
                 fig = px.scatter_map(
                     df_map, lat="latitude", lon="longitude",
                     size="aqi", color="aqi", hover_name="city_name",

@@ -191,24 +191,28 @@ def aqi_evolution(period: str = "30d"):
     """, {"interval": interval})
 
 
+@_cached_30s
 def air_quality_map():
-    """Panel 1.8 — Latest AQI by city with coordinates."""
+    """Panel 1.8 — Latest AQI by city with coordinates.
+
+    The ``status`` label is intentionally NOT computed in SQL: it is derived
+    client-side from ``aqi`` via ``charts.aqi_level_label`` so the map shows
+    the same 5-level AQI scale as the rest of the app, translated into the
+    current language. ``dim_date.hour`` is stored in UTC, so the current-hour
+    filter compares against UTC (matches ``pipeline_status``/``last_ingestion``).
+    """
     return query("""
-        SELECT c.latitude, c.longitude, f.aqi, c.city_name,
-            CASE
-                WHEN f.aqi <= 2 THEN 'Good'
-                WHEN f.aqi = 3  THEN 'Moderate'
-                WHEN f.aqi >= 4 THEN 'Poor'
-            END AS status
+        SELECT c.latitude, c.longitude, f.aqi, c.city_name
         FROM fact_aqi f
         JOIN dim_city c ON f.city_key = c.city_key
         JOIN dim_date d ON f.date_key = d.date_key
         WHERE d.full_date = CURRENT_DATE
-          AND d.hour = EXTRACT(HOUR FROM NOW())
+          AND d.hour = EXTRACT(HOUR FROM NOW() AT TIME ZONE 'UTC')
         ORDER BY c.city_name
     """)
 
 
+@_cached_30s
 def aqi_distribution(period: str = "7d"):
     """Panel 1.9 — Distribution of AQI levels."""
     interval = period_to_interval(period)
