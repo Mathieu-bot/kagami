@@ -116,6 +116,10 @@ STRINGS = {
         "drill.who_thresholds_city": "Polluants vs seuils OMS — {city}",        "drill.who_caption": "_Les lignes pointillées sont les lignes directrices OMS 24h (µg/m³)_",
         "drill.worst_episodes": "Pires épisodes",        "drill.no_bad_episodes": "Aucun mauvais épisode sur cette période !",        "drill.status_alert": "Alerte",
         "drill.status_who_pm25": "OMS PM2.5",
+        "drill.status_who_pm10": "OMS PM10",
+        "drill.status_who_no2": "OMS NO₂",
+        "drill.status_who_o3": "OMS O₃",
+        "drill.status_who_so2": "OMS SO₂",
         "drill.who_hline": "OMS {pollutant} {threshold} µg/m³",
 
         # ── Drill captions (panel descriptions) ──
@@ -125,6 +129,8 @@ STRINGS = {
         "drill.all_pollutants_caption": "_Évolution horaire de chaque polluant sur {period}_",
         "drill.who_thresholds_city_caption": "_Concentrations journalières sur {period} avec les lignes directrices OMS 24h_",
         "drill.worst_episodes_caption": "_Les 20 pires moments de la ville sur {period}_",
+        "drill.trace_title": "Polluants traces (SO₂, CO, NH₃)",
+        "drill.trace_caption": "_Moyennes journalières sur {period}, à leur propre échelle. Valeurs bien en dessous des lignes directrices OMS._",
 
         # ── Deep Analysis ──
         "deep.title": "Analyse approfondie",        "deep.caption": "_Conforme EDA : statistiques, valeurs aberrantes, corrélations, multi-dimensionnel_",
@@ -376,6 +382,10 @@ STRINGS = {
         "drill.who_thresholds_city": "Pollutants vs WHO Thresholds — {city}",        "drill.who_caption": "_Dashed lines are WHO 24h air quality guidelines (µg/m³)_",
         "drill.worst_episodes": "Worst Episodes",        "drill.no_bad_episodes": "No bad episodes in this period!",        "drill.status_alert": "Alert",
         "drill.status_who_pm25": "WHO PM2.5",
+        "drill.status_who_pm10": "WHO PM10",
+        "drill.status_who_no2": "WHO NO₂",
+        "drill.status_who_o3": "WHO O₃",
+        "drill.status_who_so2": "WHO SO₂",
         "drill.who_hline": "WHO {pollutant} {threshold} µg/m³",
 
         # ── Drill captions (panel descriptions) ──
@@ -385,6 +395,8 @@ STRINGS = {
         "drill.all_pollutants_caption": "_Hourly evolution of each pollutant over {period}_",
         "drill.who_thresholds_city_caption": "_Daily concentrations over {period} with the WHO 24h guidelines_",
         "drill.worst_episodes_caption": "_The 20 worst moments for the city over {period}_",
+        "drill.trace_title": "Trace Pollutants (SO₂, CO, NH₃)",
+        "drill.trace_caption": "_Daily averages over {period}, on their own scale. Values far below WHO guidelines._",
 
         # ── Deep Analysis ──
         "deep.title": "Deep Analysis",        "deep.caption": "_EDA-compliant: statistics, outliers, correlations, multi-dimensional_",

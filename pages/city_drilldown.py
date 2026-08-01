@@ -2,6 +2,8 @@
 
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from auth import init_session_state
 from sidebar import render_sidebar
 from config import DatabaseError
@@ -157,20 +159,63 @@ try:
         else:
             st.info(t("common.no_pollutant_data"))
 
+    # ─── Trace pollutants (SO₂, CO, NH₃) — own scale ───
+    with st.container(border=True, key="panel_drill_trace"):
+        st.subheader(t("drill.trace_title"))
+        st.caption(t("drill.trace_caption", period=period_label(period)))
+        if not df_who.empty:
+            trace_cols = ["so2", "co", "nh3"]
+            thresholds = {"so2": 40, "co": 4000}
+            fig = make_subplots(
+                rows=3, shared_xaxes=True,
+                subplot_titles=[col(c) for c in trace_cols],
+                vertical_spacing=0.08,
+            )
+            for i, c in enumerate(trace_cols, start=1):
+                fig.add_trace(
+                    go.Scatter(x=df_who["full_date"], y=df_who[c],
+                               name=col(c), line=dict(width=2)),
+                    row=i, col=1,
+                )
+                if c in thresholds:
+                    fig.add_hline(
+                        y=thresholds[c], line_dash="dash", line_color="red",
+                        opacity=0.6, row=i, col=1,
+                        annotation_text=t("drill.who_hline", pollutant=c.upper(),
+                                          threshold=thresholds[c]),
+                    )
+            fig.update_layout(showlegend=False)
+            fig = style_plotly_chart(fig, height=340)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info(t("common.no_pollutant_data"))
+
     # ─── Row 4: Worst Episodes ───
     with st.expander(t("drill.worst_episodes"), expanded=False):
         st.caption(t("drill.worst_episodes_caption", period=period_label(period)))
         df_worst = city_worst_episodes(city, period)
         exports["worst_episodes"] = df_worst
         if not df_worst.empty:
-            status_map = {"Alert": t("drill.status_alert"), "WHO PM2.5": t("drill.status_who_pm25")}
+            status_map = {
+                "Alert": t("drill.status_alert"),
+                "WHO PM2.5": t("drill.status_who_pm25"),
+                "WHO PM10": t("drill.status_who_pm10"),
+                "WHO NO₂": t("drill.status_who_no2"),
+                "WHO O₃": t("drill.status_who_o3"),
+                "WHO SO₂": t("drill.status_who_so2"),
+            }
             display = df_worst.copy()
             display["status"] = df_worst["status"].map(lambda v: status_map.get(v, v))
-            styled = display.style.map(
-                lambda v: "color: red; font-weight: bold" if v == t("drill.status_alert")
-                else ("color: orange" if v == t("drill.status_who_pm25") else ""),
-                subset=["status"],
-            )
+            alert_label = t("drill.status_alert")
+
+            def _style(v):
+                if v == alert_label:
+                    return "color: red; font-weight: bold"
+                if v.startswith("OMS") or v.startswith("WHO"):
+                    return "color: orange"
+                return ""
+
+            styled = display.style.map(_style, subset=["status"])
             st.dataframe(styled, use_container_width=True, hide_index=True)
         else:
             st.success(t("drill.no_bad_episodes"))
