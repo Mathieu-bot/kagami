@@ -380,17 +380,21 @@ def city_worst_episodes(city_name: str, period: str = "30d"):
     """Panel 2.5 — Top 20 worst episodes for a city."""
     interval = period_to_interval(period)
     return query("""
-        SELECT d.full_date, d.hour, f.aqi, f.pm2_5, f.pm10, f.no2, f.o3,
+        SELECT d.full_date, d.hour, f.aqi, f.pm2_5, f.pm10, f.no2, f.o3, f.so2,
             CASE
                 WHEN f.aqi >= 3 THEN 'Alert'
                 WHEN f.pm2_5 > 15 THEN 'WHO PM2.5'
+                WHEN f.pm10 > 45 THEN 'WHO PM10'
+                WHEN f.no2 > 25 THEN 'WHO NO₂'
+                WHEN f.o3 > 100 THEN 'WHO O₃'
+                WHEN f.so2 > 40 THEN 'WHO SO₂'
                 ELSE 'Normal'
             END AS status
         FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
         JOIN dim_city c ON f.city_key = c.city_key
         WHERE c.city_name = :city_name
           AND d.full_date >= CURRENT_DATE - CAST(:interval AS INTERVAL)
-          AND (f.aqi >= 3 OR f.pm2_5 > 15)
+          AND (f.aqi >= 3 OR f.pm2_5 > 15 OR f.pm10 > 45 OR f.no2 > 25 OR f.o3 > 100 OR f.so2 > 40)
         ORDER BY d.full_date DESC, d.hour DESC LIMIT 20
     """, {"city_name": city_name, "interval": interval})
 
@@ -406,9 +410,24 @@ def correlation_matrix(period: str = "30d"):
             COALESCE(ROUND(CORR(f.pm2_5, f.pm10)::numeric, 3), 0) AS "PM2.5_x_PM10",
             COALESCE(ROUND(CORR(f.pm2_5, f.no2)::numeric, 3), 0)  AS "PM2.5_x_NO2",
             COALESCE(ROUND(CORR(f.pm2_5, f.o3)::numeric, 3), 0)   AS "PM2.5_x_O3",
+            COALESCE(ROUND(CORR(f.pm2_5, f.so2)::numeric, 3), 0)  AS "PM2.5_x_SO2",
+            COALESCE(ROUND(CORR(f.pm2_5, f.co)::numeric, 3), 0)   AS "PM2.5_x_CO",
+            COALESCE(ROUND(CORR(f.pm2_5, f.nh3)::numeric, 3), 0)  AS "PM2.5_x_NH3",
             COALESCE(ROUND(CORR(f.pm10, f.no2)::numeric, 3), 0)   AS "PM10_x_NO2",
             COALESCE(ROUND(CORR(f.pm10, f.o3)::numeric, 3), 0)    AS "PM10_x_O3",
+            COALESCE(ROUND(CORR(f.pm10, f.so2)::numeric, 3), 0)   AS "PM10_x_SO2",
+            COALESCE(ROUND(CORR(f.pm10, f.co)::numeric, 3), 0)    AS "PM10_x_CO",
+            COALESCE(ROUND(CORR(f.pm10, f.nh3)::numeric, 3), 0)   AS "PM10_x_NH3",
             COALESCE(ROUND(CORR(f.no2, f.o3)::numeric, 3), 0)     AS "NO2_x_O3",
+            COALESCE(ROUND(CORR(f.no2, f.so2)::numeric, 3), 0)    AS "NO2_x_SO2",
+            COALESCE(ROUND(CORR(f.no2, f.co)::numeric, 3), 0)     AS "NO2_x_CO",
+            COALESCE(ROUND(CORR(f.no2, f.nh3)::numeric, 3), 0)    AS "NO2_x_NH3",
+            COALESCE(ROUND(CORR(f.o3, f.so2)::numeric, 3), 0)     AS "O3_x_SO2",
+            COALESCE(ROUND(CORR(f.o3, f.co)::numeric, 3), 0)      AS "O3_x_CO",
+            COALESCE(ROUND(CORR(f.o3, f.nh3)::numeric, 3), 0)     AS "O3_x_NH3",
+            COALESCE(ROUND(CORR(f.so2, f.co)::numeric, 3), 0)     AS "SO2_x_CO",
+            COALESCE(ROUND(CORR(f.so2, f.nh3)::numeric, 3), 0)    AS "SO2_x_NH3",
+            COALESCE(ROUND(CORR(f.co, f.nh3)::numeric, 3), 0)     AS "CO_x_NH3",
             COALESCE(ROUND(CORR(f.aqi, f.pm2_5)::numeric, 3), 0)  AS "AQI_x_PM25",
             COALESCE(ROUND(CORR(f.aqi, f.pm10)::numeric, 3), 0)   AS "AQI_x_PM10",
             COALESCE(ROUND(CORR(f.aqi, f.o3)::numeric, 3), 0)     AS "AQI_x_O3"
@@ -447,6 +466,7 @@ def seasonal_analysis():
             ROUND(AVG(f.aqi)::numeric, 2) AS avg_aqi,
             ROUND(AVG(f.pm2_5)::numeric, 2) AS avg_pm25,
             ROUND(AVG(f.pm10)::numeric, 2) AS avg_pm10,
+            ROUND(AVG(f.no2)::numeric, 2) AS avg_no2,
             ROUND(AVG(f.o3)::numeric, 2) AS avg_o3,
             COUNT(*) AS measurements
         FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
@@ -462,7 +482,9 @@ def weekday_weekend():
             CASE WHEN d.is_weekend THEN 'Weekend' ELSE 'Weekday' END AS day_type,
             ROUND(AVG(f.aqi)::numeric, 2) AS avg_aqi,
             ROUND(AVG(f.pm2_5)::numeric, 2) AS avg_pm25,
+            ROUND(AVG(f.pm10)::numeric, 2) AS avg_pm10,
             ROUND(AVG(f.no2)::numeric, 2) AS avg_no2,
+            ROUND(AVG(f.o3)::numeric, 2) AS avg_o3,
             COUNT(*) AS measurements
         FROM fact_aqi f JOIN dim_date d ON f.date_key = d.date_key
         GROUP BY d.is_weekend ORDER BY d.is_weekend
@@ -614,7 +636,10 @@ def city_pollutant_timeseries(city_name: str, period: str = "30d"):
                COALESCE(ROUND(AVG(f.pm2_5)::numeric, 2), 0) AS pm2_5,
                COALESCE(ROUND(AVG(f.pm10)::numeric, 2), 0) AS pm10,
                COALESCE(ROUND(AVG(f.no2)::numeric, 2), 0) AS no2,
-               COALESCE(ROUND(AVG(f.o3)::numeric, 2), 0) AS o3
+               COALESCE(ROUND(AVG(f.o3)::numeric, 2), 0) AS o3,
+               COALESCE(ROUND(AVG(f.so2)::numeric, 2), 0) AS so2,
+               COALESCE(ROUND(AVG(f.co)::numeric, 2), 0) AS co,
+               COALESCE(ROUND(AVG(f.nh3)::numeric, 2), 0) AS nh3
         FROM fact_aqi f
         JOIN dim_city c ON c.city_key = f.city_key
         JOIN dim_date d ON f.date_key = d.date_key
