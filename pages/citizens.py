@@ -34,7 +34,7 @@ st.caption(t("citizens.caption"))
 
 try:
     # ─── Local filter: cities ───
-    with st.expander(t("common.filters"), expanded=False):
+    with st.popover(t("common.filters")):
         df_city_opt = list_cities()
         city_options = df_city_opt["city_name"].tolist() if not df_city_opt.empty else []
         filters.cities_multiselect(city_options, key="citizens_cities")

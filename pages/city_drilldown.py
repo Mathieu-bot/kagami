@@ -48,7 +48,7 @@ try:
     city = st.selectbox(t("common.select_city"), cities, key="city_dd_city")
 
     # ─── Local filters: period + pollutants ───
-    with st.expander(t("common.filters"), expanded=False):
+    with st.popover(t("common.filters")):
         period = filters.period_selector(key="dd_period", default="30d")
         filters.pollutants_multiselect(key="dd_pollutants")
     selected_pollutants = filters.selected("dd_pollutants")

@@ -76,7 +76,7 @@ if not users:
     st.info(t("users.none"))
 else:
     # ─── Filters: search + role + active only ───
-    with st.expander(t("common.filters"), expanded=False):
+    with st.popover(t("common.filters")):
         search = st.text_input(t("users.search"), key="um_search")
         role_filter = st.selectbox(
             t("users.role_filter"), ["all", "viewer", "admin"], index=0,

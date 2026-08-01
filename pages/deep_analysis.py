@@ -41,7 +41,7 @@ exports = {}
 
 try:
     # ─── Local filters: period + cities + pollutants ───
-    with st.expander(t("common.filters"), expanded=False):
+    with st.popover(t("common.filters")):
         period = filters.period_selector(key="deep_period", default="30d")
         df_city_opt = list_cities()
         city_options = df_city_opt["city_name"].tolist() if not df_city_opt.empty else []

@@ -53,7 +53,7 @@ try:
     control_room()
 
     # ─── Local filters: days + severity + cities ───
-    with st.expander(t("common.filters"), expanded=False):
+    with st.popover(t("common.filters")):
         days = st.selectbox(t("common.period"), [30, 90, 180, 365], index=1,
                             format_func=lambda d: t("alerts.last_days", d=d),
                             key="alerts_days")

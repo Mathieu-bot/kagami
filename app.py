@@ -169,7 +169,7 @@ try:
     st.caption(t("hq.caption"))
 
     # ─── Local filters (this page only) ───
-    with st.expander(t("common.filters"), expanded=False):
+    with st.popover(t("common.filters")):
         period = filters.period_selector(key="hq_period", default="7d")
         df_city_opt = list_cities()
         city_options = df_city_opt["city_name"].tolist() if not df_city_opt.empty else []
