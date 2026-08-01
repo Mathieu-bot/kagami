@@ -45,7 +45,7 @@ try:
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_pipeline_status"):
             st.subheader(t("pipeline.status"))
             st.caption(t("pipeline.status_caption"))
             df_status = pipeline_status()
@@ -55,7 +55,7 @@ try:
                 st.metric(col("status"), f"{emoji} {label}")
 
     with col2:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_pipeline_last_ingestion"):
             st.subheader(t("pipeline.last_ingestion"))
             st.caption(t("pipeline.last_ingestion_caption"))
             df_last = last_ingestion()
@@ -63,7 +63,7 @@ try:
                 st.metric(t("pipeline.last_record"), str(df_last["last_record"].iloc[0]))
 
     with col3:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_pipeline_completeness"):
             st.subheader(t("pipeline.data_completeness"))
             st.caption(t("pipeline.data_completeness_caption"))
             df_comp = data_completeness()
@@ -73,7 +73,7 @@ try:
                 st.progress(min(comp, 100) / 100)
 
     # ─── Panel 4.2 — Records per Day ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_pipeline_records"):
         st.subheader(t("pipeline.records_per_day"))
         st.caption(t("pipeline.records_per_day_caption"))
         df_records = records_per_day()
@@ -86,7 +86,7 @@ try:
             st.plotly_chart(fig, use_container_width=True)
 
     # ─── Panel 4.3 — Data Gaps ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_pipeline_gaps"):
         st.subheader(t("pipeline.missing_data"))
         st.caption(t("pipeline.missing_data_caption"))
         df_gaps = data_gaps()

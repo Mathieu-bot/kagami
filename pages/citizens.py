@@ -41,13 +41,13 @@ try:
     selected_cities = filters.selected("citizens_cities")
 
     # ─── Understand the AQI ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_citizens_understand"):
         st.subheader(t("citizens.understand_aqi"))
         st.caption(t("citizens.understand_aqi_caption"))
         st.markdown(t("citizens.aqi_explained"))
 
     # ─── What to do by level ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_citizens_advice"):
         st.subheader(t("citizens.what_to_do"))
         st.caption(t("citizens.what_to_do_caption"))
         levels = [
@@ -62,13 +62,13 @@ try:
                 st.markdown(advice)
 
     # ─── Vulnerable groups ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_citizens_vulnerable"):
         st.subheader(t("citizens.vulnerable"))
         st.caption(t("citizens.vulnerable_caption"))
         st.markdown(t("citizens.vulnerable_text"))
 
     # ─── Monitored pollutants ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_citizens_pollutants"):
         st.subheader(t("citizens.pollutants"))
         st.caption(t("citizens.pollutants_caption"))
         for text in (
@@ -80,7 +80,7 @@ try:
             st.markdown(f"- {text}")
 
     # ─── Live air quality badges ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_citizens_realtime"):
         st.subheader(t("citizens.realtime"))
         st.caption(t("citizens.realtime_caption"))
         df_live = control_room_status()
@@ -92,7 +92,7 @@ try:
             render_city_badges(df_live)
 
     # ─── WHO threshold exceedances by city ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_citizens_who"):
         st.subheader(t("citizens.who_health"))
         st.caption(t("citizens.who_health_caption"))
         df_who = citizen_who_exceedance()

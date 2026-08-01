@@ -58,7 +58,7 @@ try:
 
     # Panel 2.1 — Current AQI + Sparkline
     with col1:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_drill_current"):
             st.subheader(t("drill.current_aqi_city", city=city))
             st.caption(t("drill.current_aqi_city_caption"))
             df_current = city_current_aqi(city)
@@ -78,7 +78,7 @@ try:
 
     # Panel 2.4 — City vs National
     with col2:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_drill_vs_national"):
             st.subheader(t("drill.vs_national", city=city))
             st.caption(t("drill.vs_national_caption"))
             df_comp = city_vs_national(city)
@@ -96,7 +96,7 @@ try:
                 st.plotly_chart(fig, use_container_width=True)
 
     # ─── Row 2: Hourly Profile ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_drill_hourly"):
         st.subheader(t("drill.hourly_profile", city=city))
         st.caption(t("drill.hourly_profile_caption"))
         df_hourly = city_hourly_profile(city, period)
@@ -127,7 +127,7 @@ try:
             st.plotly_chart(fig, use_container_width=True)
 
     # ─── Pollutants vs WHO thresholds ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_drill_who"):
         st.subheader(t("drill.who_thresholds_city", city=city))
         st.caption(t("drill.who_thresholds_city_caption"))
         df_who = city_pollutant_timeseries(city, period)

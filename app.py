@@ -138,7 +138,7 @@ try:
         aqi_val = round(df_aqi["avg_aqi"].iloc[0], 2) if not df_aqi.empty else 0
         yest_val = round(df_yest["yesterday_avg"].iloc[0], 2) if not df_yest.empty else 0
         delta = round(aqi_val - yest_val, 2)
-        with st.container(border=True):
+        with st.container(border=True, key="panel_hq_aqi_today"):
             st.metric(t("hq.aqi_today"), aqi_val, delta=delta)
             st.caption(t("hq.aqi_today_caption"))
             if not df_spark.empty:
@@ -154,25 +154,25 @@ try:
     with col2:
         df_alert = cities_in_alert()
         alert_count = int(df_alert["alert_count"].iloc[0]) if not df_alert.empty else 0
-        with st.container(border=True):
+        with st.container(border=True, key="panel_hq_cities_alert"):
             st.metric(t("hq.cities_in_alert"), alert_count)
             st.caption(t("hq.cities_in_alert_caption"))
 
     with col3:
         df_comp = data_completeness()
         comp = df_comp["completeness"].iloc[0] if not df_comp.empty else 0
-        with st.container(border=True):
+        with st.container(border=True, key="panel_hq_completeness"):
             st.metric(t("hq.data_completeness"), f"{comp}%")
             st.caption(t("hq.data_completeness_caption"))
 
     with col4:
         df_days = days_without_alert()
         days = int(df_days["days_without_alert"].iloc[0]) if not df_days.empty else 0
-        with st.container(border=True):
+        with st.container(border=True, key="panel_hq_days_alert"):
             st.metric(t("hq.days_without_alert"), days)
             st.caption(t("hq.days_without_alert_caption"))
 
-    with st.container(border=True):
+    with st.container(border=True, key="panel_hq_aqi_evolution"):
         st.subheader(t("hq.aqi_evolution"))
         st.caption(t("hq.aqi_evolution_caption"))
         df_ts = aqi_evolution(period)
@@ -190,7 +190,7 @@ try:
 
     col1, col2 = st.columns([3, 2])
     with col1:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_hq_map"):
             st.subheader(t("hq.aqi_map"))
             st.caption(t("hq.aqi_map_caption"))
             df_map = air_quality_map()
@@ -212,7 +212,7 @@ try:
                 st.plotly_chart(fig, use_container_width=True)
 
     with col2:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_hq_distribution"):
             st.subheader(t("hq.aqi_distribution"))
             st.caption(t("hq.aqi_distribution_caption"))
             df_dist = aqi_distribution(period)
@@ -229,7 +229,7 @@ try:
 
     col1, col2 = st.columns(2)
     with col1:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_hq_worst_pollutant"):
             st.subheader(t("hq.worst_pollutant"))
             st.caption(t("hq.worst_pollutant_caption"))
             df_who = worst_pollutant(period)
@@ -246,7 +246,7 @@ try:
                 st.info(t("common.no_data"))
 
     with col2:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_hq_who_exceedance"):
             st.subheader(t("hq.who_exceedance"))
             st.caption(t("hq.who_exceedance_caption"))
             df_exc = who_exceedance_rate(period)
@@ -256,7 +256,7 @@ try:
                 st.metric(t("hq.readings_exceeding"), f"{rate}%")
                 st.progress(min(rate, 100) / 100)
 
-    with st.container(border=True):
+    with st.container(border=True, key="panel_hq_pipeline"):
         st.subheader(t("hq.pipeline_health"))
         st.caption(t("hq.pipeline_health_caption"))
         df_status = pipeline_status()
@@ -268,7 +268,7 @@ try:
         if not df_last.empty:
             st.caption(t("common.last_record", ts=df_last["last_record"].iloc[0]))
 
-    with st.container(border=True):
+    with st.container(border=True, key="panel_hq_exec_summary"):
         render_executive_summary(period, selected_cities)
 
     with st.expander(t("common.export_csv"), expanded=False):

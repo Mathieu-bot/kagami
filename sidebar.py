@@ -42,16 +42,16 @@ _GLOBAL_CSS = """
     flex-direction: column;
     flex: 1;
 }
-[data-testid="stVerticalBlockBorderWrapper"] {
+[data-testid="stLayoutWrapper"] {
+    flex: 1;
+}
+[data-testid="stVerticalBlock"][class*="st-key-panel"] {
     display: flex;
     flex-direction: column;
     flex: 1;
     border: 2px solid rgba(28, 43, 54, 0.14) !important;
     border-radius: 12px !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
-}
-[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
-    flex: 1;
 }
 [data-testid="stSidebarContent"] {
     display: flex;

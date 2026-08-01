@@ -65,7 +65,7 @@ try:
     )
 
     # ─── Chart: history + forecast ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_forecast_chart"):
         st.subheader(t("forecast.history_forecast", city=city))
         st.caption(t("forecast.history_forecast_caption", h=horizon))
         hist = history.copy()
@@ -95,7 +95,7 @@ try:
         st.plotly_chart(fig, use_container_width=True)
 
     # ─── Forecast table ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_forecast_table"):
         st.subheader(t("forecast.details"))
         st.dataframe(translate_df(forecast), use_container_width=True, hide_index=True)
 except DatabaseError as e:

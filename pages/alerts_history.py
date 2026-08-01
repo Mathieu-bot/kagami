@@ -94,7 +94,7 @@ try:
 
     # ─── Alerts per city ───
     if not df_summary.empty:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_alerts_per_city"):
             st.subheader(t("alerts.alerts_per_city"))
             st.caption(t("alerts.alerts_per_city_caption"))
             fig = px.bar(
@@ -110,7 +110,7 @@ try:
             st.plotly_chart(fig, use_container_width=True)
 
     # ─── Recent episodes table ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_alerts_recent"):
         st.subheader(t("alerts.recent_episodes"))
         st.caption(t("alerts.recent_episodes_caption"))
         recent = df_episodes.head(100).copy()

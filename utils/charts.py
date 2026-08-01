@@ -146,7 +146,7 @@ def render_city_badges(df: pd.DataFrame, aqi_col: str = "aqi",
             aqi = int(round(float(row[aqi_col]))) if pd.notna(row[aqi_col]) else 0
             color = aqi_badge_color(aqi)
             with col_box:
-                with st.container(border=True):
+                with st.container(border=True, key=f"panel_badge_{row['city_name']}"):
                     st.markdown(f"**{row['city_name']}**")
                     st.markdown(f":{color}[**AQI {aqi}**]")
                     if show_freshness and "last_record" in rows.columns:

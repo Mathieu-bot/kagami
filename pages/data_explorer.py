@@ -55,7 +55,7 @@ QUICK_QUERIES = {
 
 try:
     # ─── Quick browse ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_explorer_quick"):
         st.subheader(t("explorer.quick"))
         quick = st.selectbox(t("explorer.pick"), list(QUICK_QUERIES) + [t("explorer.custom")],
                              key="explorer_quick")

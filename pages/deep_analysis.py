@@ -51,7 +51,7 @@ try:
     selected_pollutants = filters.selected("deep_pollutants")
 
     # ─── Panel 3.5 — BOXPLOT by Month ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_deep_boxplot"):
         st.subheader(t("deep.boxplot"))
         st.caption(t("deep.boxplot_caption"))
         df_box = boxplot_data()
@@ -70,7 +70,7 @@ try:
     col1, col2 = st.columns(2)
 
     with col1:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_deep_scatter"):
             st.subheader(t("deep.scatter"))
             st.caption(t("deep.scatter_caption"))
             df_scatter = scatter_data(period)
@@ -95,7 +95,7 @@ try:
 
     # ─── Panel 3.7 — HEATMAP Hour × Day ───
     with col2:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_deep_heatmap"):
             st.subheader(t("deep.heatmap"))
             st.caption(t("deep.heatmap_caption"))
             df_heat = heatmap_data()
@@ -120,7 +120,7 @@ try:
                 st.plotly_chart(fig, use_container_width=True)
 
     # ─── Panel 3.1 — Correlation Matrix ───
-    with st.container(border=True):
+    with st.container(border=True, key="panel_deep_corr"):
         st.subheader(t("deep.corr_matrix"))
         st.caption(t("deep.corr_caption"))
         df_corr = correlation_matrix(period)
@@ -171,7 +171,7 @@ try:
     col1, col2 = st.columns(2)
 
     with col1:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_deep_seasonal"):
             st.subheader(t("deep.seasonal"))
             st.caption(t("deep.seasonal_caption"))
             df_season = seasonal_analysis()
@@ -188,7 +188,7 @@ try:
                 st.plotly_chart(fig, use_container_width=True)
 
     with col2:
-        with st.container(border=True):
+        with st.container(border=True, key="panel_deep_weekday"):
             st.subheader(t("deep.weekday_weekend"))
             st.caption(t("deep.weekday_weekend_caption"))
             df_we = weekday_weekend()

@@ -82,7 +82,7 @@ try:
 
                 # 7-day trend for the two cities
                 if not df_trend.empty:
-                    with st.container(border=True):
+                    with st.container(border=True, key="panel_compare_duel_trend"):
                         st.subheader(t("compare.trend_7d_title"))
                         st.caption(t("compare.trend_7d_caption"))
                         trend_ab = df_trend[df_trend["city_name"].isin([city_a, city_b])]
@@ -103,7 +103,7 @@ try:
                             st.plotly_chart(fig, use_container_width=True)
 
                 # Average pollutants (7 days)
-                with st.container(border=True):
+                with st.container(border=True, key="panel_compare_pollutants"):
                     st.subheader(t("compare.pollutant_compare"))
                     st.caption(t("compare.avg_this_week"))
                     df_poll = comparison_pollutants(city_a, city_b)
@@ -131,7 +131,7 @@ try:
 
         # ─── Current AQI bar chart ───
         if not df_current.empty:
-            with st.container(border=True):
+            with st.container(border=True, key="panel_compare_current_aqi"):
                 st.subheader(t("compare.current_aqi_by_city"))
                 st.caption(t("compare.current_aqi_caption"))
                 fig = px.bar(
@@ -148,7 +148,7 @@ try:
 
         # ─── 7-day trend multi-line ───
         if not df_trend.empty:
-            with st.container(border=True):
+            with st.container(border=True, key="panel_compare_trend_all"):
                 st.subheader(t("compare.trend_7d_title"))
                 st.caption(t("compare.trend_7d_caption"))
                 fig = px.line(
@@ -165,7 +165,7 @@ try:
 
         # ─── Ranking table ───
         if not df_current.empty:
-            with st.container(border=True):
+            with st.container(border=True, key="panel_compare_ranking"):
                 st.subheader(t("compare.ranking"))
                 st.caption(t("compare.ranking_caption"))
                 st.dataframe(
