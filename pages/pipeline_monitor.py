@@ -13,7 +13,7 @@ from queries import (
     data_gaps,
     list_cities,
 )
-from utils.charts import style_plotly_chart, pipeline_status_label
+from utils.charts import style_plotly_chart, pipeline_status_label, _freshness
 from utils import filters
 from i18n import t, col, translate_df
 from ui import page_icon
@@ -27,8 +27,8 @@ st.set_page_config(
 )
 
 init_session_state()
-require_role("admin")
 render_sidebar()
+require_role("admin")
 
 st.title(t("pipeline.title"))
 st.caption(t("pipeline.caption"))
@@ -60,7 +60,7 @@ try:
             st.caption(t("pipeline.last_ingestion_caption"))
             df_last = last_ingestion()
             if not df_last.empty:
-                st.metric(t("pipeline.last_record"), str(df_last["last_record"].iloc[0]))
+                st.metric(t("pipeline.last_record"), _freshness(df_last["last_record"].iloc[0]))
 
     with col3:
         with st.container(border=True, key="panel_pipeline_completeness"):
