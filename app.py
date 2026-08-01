@@ -130,7 +130,7 @@ try:
         filters.cities_multiselect(city_options, key="hq_cities")
     selected_cities = filters.selected("hq_cities")
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         df_aqi = aqi_today()
         df_yest = aqi_yesterday()
@@ -158,7 +158,6 @@ try:
             st.metric(t("hq.cities_in_alert"), alert_count)
             st.caption(t("hq.cities_in_alert_caption"))
 
-    col3, col4 = st.columns(2)
     with col3:
         df_comp = data_completeness()
         comp = df_comp["completeness"].iloc[0] if not df_comp.empty else 0
