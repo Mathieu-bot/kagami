@@ -38,6 +38,7 @@ def period_to_interval(period: str) -> str:
 
 # ─── Dashboard 1: HQ Overview ───
 
+@_cached_30s
 def aqi_today():
     """Panel 1.1 — AQI average for today."""
     return query("""
@@ -48,6 +49,7 @@ def aqi_today():
     """)
 
 
+@_cached_30s
 def aqi_yesterday():
     """Panel 1.1 — Yesterday's AQI average for comparison."""
     return query("""
@@ -58,6 +60,7 @@ def aqi_yesterday():
     """)
 
 
+@_cached_30s
 def aqi_today_sparkline():
     """Panel 1.1 — Hourly AQI sparkline for today."""
     return query("""
@@ -72,6 +75,7 @@ def aqi_today_sparkline():
     """)
 
 
+@_cached_30s
 def cities_in_alert():
     """Panel 1.2 — Number of cities currently in alert (AQI >= 3)."""
     return query("""
@@ -82,6 +86,7 @@ def cities_in_alert():
     """)
 
 
+@_cached_30s
 def worst_pollutant(period: str = "7d"):
     """Panel 1.3 — Pollutant closest to WHO threshold."""
     interval = period_to_interval(period)
@@ -122,6 +127,7 @@ def worst_pollutant(period: str = "7d"):
     """, {"interval": interval})
 
 
+@_cached_30s
 def data_completeness():
     """Panel 1.4 — Data completeness percentage for today.
 
@@ -137,6 +143,7 @@ def data_completeness():
     """)
 
 
+@_cached_30s
 def days_without_alert():
     """Panel 1.5 — Consecutive days without any AQI >= 3."""
     return query("""
@@ -157,6 +164,7 @@ def days_without_alert():
     """)
 
 
+@_cached_30s
 def who_exceedance_rate(period: str = "7d"):
     """Panel 1.6 — % of readings exceeding any WHO threshold."""
     interval = period_to_interval(period)
@@ -173,6 +181,7 @@ def who_exceedance_rate(period: str = "7d"):
     """, {"interval": interval})
 
 
+@_cached_30s
 def aqi_evolution(period: str = "30d"):
     """Panel 1.7 — Daily AQI time series with 7-day moving average."""
     interval = period_to_interval(period)
@@ -225,6 +234,7 @@ def aqi_distribution(period: str = "7d"):
     """, {"interval": interval})
 
 
+@_cached_30s
 def last_ingestion():
     """Panel 1.10 — Timestamp of the latest record (UTC)."""
     return query("""
@@ -233,6 +243,7 @@ def last_ingestion():
     """)
 
 
+@_cached_30s
 def pipeline_status():
     """Panel 1.10 — Pipeline health status.
 
@@ -257,6 +268,7 @@ def pipeline_status():
 
 # ─── Dashboard 2: City Drill-down ───
 
+@_cached_30s
 def city_current_aqi(city_name: str):
     """Panel 2.1 — Current AQI for a specific city."""
     return query("""
@@ -269,6 +281,7 @@ def city_current_aqi(city_name: str):
     """, {"city_name": city_name})
 
 
+@_cached_30s
 def city_weekly_aqi(city_name: str):
     """Panel 2.1 — 7-day AQI sparkline for a city."""
     return query("""
@@ -284,6 +297,7 @@ def city_weekly_aqi(city_name: str):
     """, {"city_name": city_name})
 
 
+@_cached_30s
 def city_hourly_profile(city_name: str, period: str = "30d"):
     """Panel 2.2 — Average pollutant levels per hour."""
     interval = period_to_interval(period)
@@ -303,6 +317,7 @@ def city_hourly_profile(city_name: str, period: str = "30d"):
     """, {"city_name": city_name, "interval": interval})
 
 
+@_cached_30s
 def city_all_pollutants(city_name: str, period: str = "7d"):
     """Panel 2.3 — Time series for all pollutants."""
     interval = period_to_interval(period)
@@ -319,6 +334,7 @@ def city_all_pollutants(city_name: str, period: str = "7d"):
     """, {"city_name": city_name, "interval": interval})
 
 
+@_cached_30s
 def city_vs_national(city_name: str):
     """Panel 2.4 — City averages vs national averages."""
     return query("""
@@ -359,6 +375,7 @@ def city_vs_national(city_name: str):
     """, {"city_name": city_name})
 
 
+@_cached_30s
 def city_worst_episodes(city_name: str, period: str = "30d"):
     """Panel 2.5 — Top 20 worst episodes for a city."""
     interval = period_to_interval(period)
@@ -380,6 +397,7 @@ def city_worst_episodes(city_name: str, period: str = "30d"):
 
 # ─── Dashboard 3: Deep Analysis ───
 
+@_cached_30s
 def correlation_matrix(period: str = "30d"):
     """Panel 3.1 — Pollutant correlation matrix."""
     interval = period_to_interval(period)
@@ -399,6 +417,7 @@ def correlation_matrix(period: str = "30d"):
     """, {"interval": interval})
 
 
+@_cached_30s
 def monthly_statistics():
     """Panel 3.2 — Monthly statistical distribution."""
     return query("""
@@ -417,6 +436,7 @@ def monthly_statistics():
     """)
 
 
+@_cached_30s
 def seasonal_analysis():
     """Panel 3.3 — Dry vs wet season comparison."""
     return query("""
@@ -434,6 +454,7 @@ def seasonal_analysis():
     """)
 
 
+@_cached_30s
 def weekday_weekend():
     """Panel 3.4 — Weekday vs weekend comparison."""
     return query("""
@@ -448,6 +469,7 @@ def weekday_weekend():
     """)
 
 
+@_cached_30s
 def boxplot_data():
     """Panel 3.5 — Raw AQI values by month for boxplot."""
     return query("""
@@ -458,6 +480,7 @@ def boxplot_data():
     """)
 
 
+@_cached_30s
 def scatter_data(period: str = "30d"):
     """Panel 3.6 — PM2.5 vs AQI scatter data."""
     interval = period_to_interval(period)
@@ -469,6 +492,7 @@ def scatter_data(period: str = "30d"):
     """, {"interval": interval})
 
 
+@_cached_30s
 def heatmap_data():
     """Panel 3.7 — AQI by hour and day of week for heatmap."""
     return query("""
@@ -491,6 +515,7 @@ def heatmap_data():
     """)
 
 
+@_cached_30s
 def records_per_day():
     """Panel 4.2 — Records per day for the last 7 days."""
     return query("""
@@ -501,6 +526,7 @@ def records_per_day():
     """)
 
 
+@_cached_30s
 def data_gaps():
     """Panel 4.3 — Missing data detection for last 24h."""
     return query("""
@@ -514,11 +540,13 @@ def data_gaps():
     """)
 
 
+@_cached_30s
 def list_cities():
     """Get list of all cities."""
     return query("SELECT city_name FROM dim_city ORDER BY city_name")
 
 
+@_cached_30s
 def get_all_cities():
     """Get all cities with coordinates."""
     return query("SELECT * FROM dim_city ORDER BY city_name")
@@ -526,6 +554,7 @@ def get_all_cities():
 
 # ─── Dashboard 5: City Comparison ───
 
+@_cached_30s
 def comparison_current():
     """Current AQI per city for the inter-city comparison panel."""
     return query("""
@@ -540,6 +569,7 @@ def comparison_current():
     """)
 
 
+@_cached_30s
 def comparison_trend_7d():
     """Daily average AQI per city over the last 7 days."""
     return query("""
@@ -554,6 +584,7 @@ def comparison_trend_7d():
     """)
 
 
+@_cached_30s
 def comparison_pollutants(city_a: str, city_b: str):
     """Average pollutant levels for two cities over the last 7 days (A/B mode)."""
     return query("""
@@ -574,6 +605,7 @@ def comparison_pollutants(city_a: str, city_b: str):
 
 # ─── WHO thresholds (City Drill-down) ───
 
+@_cached_30s
 def city_pollutant_timeseries(city_name: str, period: str = "30d"):
     """Daily average pollutant concentrations for a city (WHO overlay)."""
     interval = period_to_interval(period)
@@ -622,6 +654,7 @@ def control_room_status():
     """)
 
 
+@_cached_30s
 def citizen_who_exceedance():
     """Share of *days* exceeding WHO guidelines per city (last 7 days).
 
@@ -648,6 +681,7 @@ def citizen_who_exceedance():
     """)
 
 
+@_cached_30s
 def alert_episodes(days: int = 90):
     """Recent alert episodes (AQI >= 3) across cities."""
     return query("""
@@ -663,6 +697,7 @@ def alert_episodes(days: int = 90):
     """, {"days": days})
 
 
+@_cached_30s
 def alert_summary(days: int = 90):
     """Alerts per city: count, worst AQI, and number of affected days."""
     return query("""
@@ -681,6 +716,7 @@ def alert_summary(days: int = 90):
 
 # ─── Dashboard: AQI Forecast ───
 
+@_cached_30s
 def city_daily_aqi(city_name: str, days: int = 60):
     """Daily average AQI history used to train the forecast model."""
     return query("""
