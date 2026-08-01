@@ -52,6 +52,7 @@ def mega_dataframe():
         "avg_aqi": [1.5, 2.1],
         "yesterday_avg": [1.2, 2.0],
         "time": ["2026-07-31 08:00:00", "2026-07-31 09:00:00"],
+        "best_hour": [5, 6],
         "alert_count": [0, 1],
         "completeness": [96.5, 96.5],
         "days_without_alert": [12, 12],

@@ -60,6 +60,7 @@ class TestFunctionsWithPeriod:
 
     @pytest.mark.parametrize("func_name,period,expected_cols", [
         ("aqi_evolution", "30d", ["full_date", "daily_avg", "trend"]),
+        ("best_hour_per_city", "30d", ["city_name", "best_hour", "avg_aqi"]),
         ("aqi_distribution", "7d", ["aqi", "count", "percentage"]),
         ("correlation_matrix", "30d", ["PM2.5_x_PM10", "PM2.5_x_SO2", "CO_x_NH3",
                                        "AQI_x_PM25", "AQI_x_O3"]),

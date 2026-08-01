@@ -89,6 +89,7 @@ def test_period_queries_return_expected_columns():
         (q.scatter_data, "30d", ["pm2_5", "aqi", "city_name"]),
         (q.who_exceedance_rate, "7d", ["exceedance_rate"]),
         (q.worst_pollutant, "7d", ["pollutant", "value", "who_threshold", "pct"]),
+        (q.best_hour_per_city, "30d", ["city_name", "best_hour", "avg_aqi"]),
     ]
     for func, period, expected_cols in checks:
         df = func(period)
