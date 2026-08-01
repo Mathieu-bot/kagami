@@ -22,14 +22,20 @@ jobs:
 
       - name: SSH and deploy
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
+          envs: DEPLOY_SHA
           script: |
             cd /home/ubuntu/kagami
             source /home/ubuntu/kagami-env/bin/activate
-            git pull origin main
+            # Deploy the exact commit CI validated (workflow_run.head_sha),
+            # not whatever main happens to point at when this job runs.
+            git fetch origin
+            git checkout -q "$DEPLOY_SHA"
             pip install -q -r requirements.txt
             # Validate the Caddyfile before touching the live server
             caddy validate --config Caddyfile --adapter caddyfile || exit 1
