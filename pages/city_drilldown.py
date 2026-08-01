@@ -187,6 +187,7 @@ try:
             fig.update_layout(showlegend=False)
             fig = style_plotly_chart(fig, height=340)
             st.plotly_chart(fig, use_container_width=True)
+            st.caption(t("drill.trace_co_note"))
         else:
             st.info(t("common.no_pollutant_data"))
 
