@@ -33,11 +33,13 @@ def selected(key, default=None):
 
 
 def period_selector(key: str = "period", default: str = "30d"):
-    """A period selectbox (24h / 7d / 30d / 90d / 1y), labelled in the current language."""
+    """A period segmented control (24h / 7d / 30d / 90d / 1y), labelled in the current language."""
     options = PERIOD_OPTIONS
-    index = options.index(default) if default in options else 2
-    return st.selectbox(t("common.period"), options, index=index, key=key,
-                        format_func=period_label)
+    return st.segmented_control(
+        t("common.period"), options,
+        default=default if default in options else "30d",
+        key=key, format_func=period_label,
+    )
 
 
 def cities_multiselect(options, key: str, default_all: bool = True):
@@ -48,8 +50,9 @@ def cities_multiselect(options, key: str, default_all: bool = True):
     """
     if not options:
         return None
-    selected_now = st.multiselect(
-        t("common.cities"), options, default=options if default_all else [],
+    selected_now = st.pills(
+        t("common.cities"), options, selection_mode="multi",
+        default=options if default_all else [],
         key=key,
     )
     return selected_now or None
@@ -59,8 +62,9 @@ def pollutants_multiselect(key: str, columns=None, default_all: bool = True):
     """A pollutant multiselect over the given DB columns."""
     cols = columns or POLLUTANT_COLUMNS
     options = list(cols)
-    selected_now = st.multiselect(
-        t("common.pollutants"), options, default=options if default_all else [],
+    selected_now = st.pills(
+        t("common.pollutants"), options, selection_mode="multi",
+        default=options if default_all else [],
         key=key,
     )
     return selected_now or None

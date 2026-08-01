@@ -69,6 +69,8 @@ def mock_streamlit():
         "streamlit.rerun", "streamlit.link_button", "streamlit.form",
         "streamlit.text_input", "streamlit.download_button", "streamlit.date_input",
         "streamlit.number_input", "streamlit.slider", "streamlit.text_area",
+        "streamlit.segmented_control", "streamlit.pills", "streamlit.popover",
+        "streamlit.column_config",
     ]
     with ExitStack() as stack:
         for target in targets:
