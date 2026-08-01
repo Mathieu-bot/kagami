@@ -126,22 +126,22 @@ try:
         df_corr = correlation_matrix(period)
         if not df_corr.empty:
             corr_data = df_corr.iloc[0].to_dict()
-            pollutants = ["PM2.5", "PM10", "NO₂", "O₃"]
-            matrix = np.array([
-                [1.0, corr_data.get("PM2.5_x_PM10", 0),
-                 corr_data.get("PM2.5_x_NO2", 0), corr_data.get("PM2.5_x_O3", 0)],
-                [corr_data.get("PM2.5_x_PM10", 0), 1.0,
-                 corr_data.get("PM10_x_NO2", 0), corr_data.get("PM10_x_O3", 0)],
-                [corr_data.get("PM2.5_x_NO2", 0), corr_data.get("PM10_x_NO2", 0),
-                 1.0, corr_data.get("NO2_x_O3", 0)],
-                [corr_data.get("PM2.5_x_O3", 0), corr_data.get("PM10_x_O3", 0),
-                 corr_data.get("NO2_x_O3", 0), 1.0],
-            ])
+            pollutants = ["PM2.5", "PM10", "NO₂", "O₃", "SO₂", "CO", "NH₃"]
+            alias = {"PM2.5": "PM2.5", "PM10": "PM10", "NO₂": "NO2", "O₃": "O3",
+                     "SO₂": "SO2", "CO": "CO", "NH₃": "NH3"}
+
+            def _corr(a, b):
+                if a == b:
+                    return 1.0
+                ka, kb = alias[a], alias[b]
+                return corr_data.get(f"{ka}_x_{kb}", corr_data.get(f"{kb}_x_{ka}", 0))
+
+            matrix = np.array([[_corr(a, b) for b in pollutants] for a in pollutants])
 
             fig = px.imshow(
                 matrix, x=pollutants, y=pollutants,
                 text_auto=".2f", color_continuous_scale="RdBu_r",
-                range_color=[-1, 1], aspect="auto", height=400,
+                range_color=[-1, 1], aspect="auto", height=460,
                 labels={"x": "", "y": "", "color": t("deep.correlation")},
             )
             fig = style_plotly_chart(fig)
@@ -177,13 +177,14 @@ try:
             df_season = seasonal_analysis()
             if not df_season.empty:
                 season_cols = ["avg_aqi"] + filters.active_columns(
-                    selected_pollutants, ["avg_pm25", "avg_pm10", "avg_o3"],
+                    selected_pollutants, ["avg_pm25", "avg_pm10", "avg_no2", "avg_o3"],
                     df=df_season)
                 fig = px.bar(df_season, x="season", y=season_cols,
                              barmode="group", title=t("deep.seasonal_title"),
                              labels={"value": col("value"), "season": "",
                                      "avg_aqi": col("avg_aqi"), "avg_pm25": col("avg_pm25"),
-                                     "avg_pm10": col("avg_pm10"), "avg_o3": col("avg_o3")})
+                                     "avg_pm10": col("avg_pm10"), "avg_no2": col("avg_no2"),
+                                     "avg_o3": col("avg_o3")})
                 fig = style_plotly_chart(fig)
                 st.plotly_chart(fig, use_container_width=True)
 
@@ -194,12 +195,14 @@ try:
             df_we = weekday_weekend()
             if not df_we.empty:
                 we_cols = ["avg_aqi"] + filters.active_columns(
-                    selected_pollutants, ["avg_pm25", "avg_no2"], df=df_we)
+                    selected_pollutants, ["avg_pm25", "avg_pm10", "avg_no2", "avg_o3"],
+                    df=df_we)
                 fig = px.bar(df_we, x="day_type", y=we_cols,
                              barmode="group", title=t("deep.weekday_weekend_title"),
                              labels={"value": col("value"), "day_type": "",
                                      "avg_aqi": col("avg_aqi"), "avg_pm25": col("avg_pm25"),
-                                     "avg_no2": col("avg_no2")})
+                                     "avg_pm10": col("avg_pm10"), "avg_no2": col("avg_no2"),
+                                     "avg_o3": col("avg_o3")})
                 fig = style_plotly_chart(fig)
                 st.plotly_chart(fig, use_container_width=True)
 
