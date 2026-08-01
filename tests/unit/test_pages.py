@@ -89,6 +89,7 @@ def mega_dataframe():
         "season": ["Dry", "Dry"],
         "day_type": ["Weekday", "Weekday"],
         "avg_pm25": [12.5, 13.0],
+        "avg_pm10": [22.0, 24.0],
         "avg_o3": [31.0, 32.0],
         "avg_no2": [8.5, 9.0],
         "records": [140, 142],

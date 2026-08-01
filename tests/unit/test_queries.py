@@ -23,8 +23,8 @@ QUERY_FUNCTIONS = [
     ("list_cities", ["city_name"]),
     ("get_all_cities", ["city_key", "city_name", "latitude", "longitude"]),
     ("records_per_day", ["full_date", "records"]),
-    ("seasonal_analysis", ["season", "avg_aqi", "avg_pm25"]),
-    ("weekday_weekend", ["day_type", "avg_aqi"]),
+    ("seasonal_analysis", ["season", "avg_aqi", "avg_pm25", "avg_pm10", "avg_no2", "avg_o3"]),
+    ("weekday_weekend", ["day_type", "avg_aqi", "avg_pm25", "avg_pm10", "avg_no2", "avg_o3"]),
     ("boxplot_data", ["month", "aqi"]),
     ("monthly_statistics", ["month", "median", "avg", "std"]),
     # Newer comparison / alert / forecast queries (C1 coverage)
@@ -61,7 +61,8 @@ class TestFunctionsWithPeriod:
     @pytest.mark.parametrize("func_name,period,expected_cols", [
         ("aqi_evolution", "30d", ["full_date", "daily_avg", "trend"]),
         ("aqi_distribution", "7d", ["aqi", "count", "percentage"]),
-        ("correlation_matrix", "30d", ["PM2.5_x_PM10", "AQI_x_PM25"]),
+        ("correlation_matrix", "30d", ["PM2.5_x_PM10", "PM2.5_x_SO2", "CO_x_NH3",
+                                       "AQI_x_PM25", "AQI_x_O3"]),
         ("scatter_data", "30d", ["pm2_5", "aqi", "city_name"]),
         ("who_exceedance_rate", "7d", ["exceedance_rate"]),
         ("worst_pollutant", "7d", ["pollutant", "value", "who_threshold", "pct"]),
@@ -88,9 +89,9 @@ class TestFunctionsWithCity:
         ("city_current_aqi", ["aqi"]),
         ("city_weekly_aqi", ["time", "aqi"]),
         ("city_vs_national", ["metric", "city_val", "national_val"]),
-        ("city_worst_episodes", ["full_date", "hour", "aqi", "pm2_5", "status"]),
+        ("city_worst_episodes", ["full_date", "hour", "aqi", "pm2_5", "pm10", "no2", "o3", "so2", "status"]),
         ("city_daily_aqi", ["full_date", "daily_avg"]),
-        ("city_pollutant_timeseries", ["full_date", "pm2_5", "pm10", "no2", "o3"]),
+        ("city_pollutant_timeseries", ["full_date", "pm2_5", "pm10", "no2", "o3", "so2", "co", "nh3"]),
     ])
     def test_with_city(self, func_name, expected_cols, mock_query):
         """Functions with city parameter should work correctly."""
