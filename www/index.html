@@ -92,10 +92,14 @@
       width: 44px; height: 44px; border-radius: 11px;
       display: inline-flex; align-items: center; justify-content: center;
     }
+    .card.live { border: 2px solid var(--primary); box-shadow: 0 6px 18px rgba(30,136,229,.16); }
+    .card.live:hover { box-shadow: 0 10px 26px rgba(30,136,229,.28); }
     .card.live .icon { background: rgba(30,136,229,.12); color: var(--primary); }
     .card.soon .icon { background: #eef1f5; color: #9aa7b2; }
     .card h3 { font-size: 1.1rem; }
     .card p { color: var(--muted); font-size: .92rem; line-height: 1.55; flex: 1; }
+    .card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+    .cta { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; font-weight: 600; color: var(--primary); }
     .badge {
       display: inline-block; font-size: .72rem; font-weight: 600; letter-spacing: .4px;
       padding: 3px 10px; border-radius: 999px; align-self: flex-start;
@@ -154,7 +158,15 @@
         </span>
         <h3>Qualité de l'air</h3>
         <p>Suivi en temps réel de l'AQI, alertes, prévisions et données ouvertes.</p>
-        <span class="badge live">En ligne</span>
+        <span class="card-foot">
+          <span class="badge live">En ligne</span>
+          <span class="cta">Ouvrir le workspace
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
+            </svg>
+          </span>
+        </span>
       </a>
 
       <div class="card soon">
