@@ -707,6 +707,39 @@ def citizen_who_exceedance():
 
 
 @_cached_30s
+def best_hour_per_city(period: str = "30d"):
+    """Best hour to go out per city (EDA 4.12).
+
+    Average AQI per city and hour over the period, then keep the hour
+    with the lowest average (earliest hour wins ties so the result is
+    deterministic). Same computation as the EDA notebook's
+    ``meilleure_heure`` table.
+    """
+    interval = period_to_interval(period)
+    return query("""
+        WITH hourly AS (
+            SELECT c.city_name, d.hour,
+                   COALESCE(ROUND(AVG(f.aqi)::numeric, 2), 0) AS avg_aqi
+            FROM fact_aqi f
+            JOIN dim_city c ON f.city_key = c.city_key
+            JOIN dim_date d ON f.date_key = d.date_key
+            WHERE d.full_date >= CURRENT_DATE - CAST(:interval AS INTERVAL)
+            GROUP BY c.city_name, d.hour
+        ),
+        ranked AS (
+            SELECT city_name, hour AS best_hour, avg_aqi,
+                   ROW_NUMBER() OVER (PARTITION BY city_name
+                                      ORDER BY avg_aqi ASC, hour ASC) AS rn
+            FROM hourly
+        )
+        SELECT city_name, best_hour, avg_aqi
+        FROM ranked
+        WHERE rn = 1
+        ORDER BY city_name
+    """, {"interval": interval})
+
+
+@_cached_30s
 def alert_episodes(days: int = 90):
     """Recent alert episodes (AQI >= 3) across cities."""
     return query("""
