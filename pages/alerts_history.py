@@ -88,7 +88,9 @@ try:
     # ─── Key metrics ───
     c1, c2, c3 = st.columns(3)
     c1.metric(t("alerts.total_alerts"), len(df_episodes))
-    worst = df_episodes.iloc[0]
+    # Episodes are ordered most-recent-first, so pick the highest AQI,
+    # not the first row (which would be the latest episode).
+    worst = df_episodes.loc[df_episodes["aqi"].idxmax()]
     c2.metric(t("alerts.worst_episode"), f"AQI {worst['aqi']}", f"{worst['city_name']} · {worst['full_date']}")
     c3.metric(t("alerts.cities_affected"), df_episodes["city_name"].nunique())
 
