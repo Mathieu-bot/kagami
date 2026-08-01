@@ -9,7 +9,7 @@ tests keep exercising the real rendering paths.
 
 import streamlit as st
 
-from i18n import t
+from i18n import t, period_label
 
 PERIOD_OPTIONS = ["24h", "7d", "30d", "90d", "1y"]
 
@@ -33,10 +33,11 @@ def selected(key, default=None):
 
 
 def period_selector(key: str = "period", default: str = "30d"):
-    """A period selectbox (24h / 7d / 30d / 90d / 1y)."""
+    """A period selectbox (24h / 7d / 30d / 90d / 1y), labelled in the current language."""
     options = PERIOD_OPTIONS
     index = options.index(default) if default in options else 2
-    return st.selectbox(t("common.period"), options, index=index, key=key)
+    return st.selectbox(t("common.period"), options, index=index, key=key,
+                        format_func=period_label)
 
 
 def cities_multiselect(options, key: str, default_all: bool = True):

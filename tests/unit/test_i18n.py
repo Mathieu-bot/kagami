@@ -21,6 +21,7 @@ from i18n import (
     lang_selector,
     current_lang,
     translate_df,
+    period_label,
 )
 
 
@@ -141,6 +142,48 @@ class TestLangLifecycle:
         st.session_state["lang"] = "en"
         out = translate_df(df)
         assert list(out.columns) == ["City"]
+
+
+class TestPeriodLabel:
+    """Verify period selector labels are translated and captions format."""
+
+    PERIODS = ["24h", "7d", "30d", "90d", "1y"]
+
+    def test_french_labels(self, mock_streamlit):
+        st.session_state["lang"] = "fr"
+        assert period_label("24h") == "24 heures"
+        assert period_label("7d") == "7 jours"
+        assert period_label("30d") == "30 jours"
+        assert period_label("90d") == "3 mois"
+        assert period_label("1y") == "1 an"
+
+    def test_english_labels(self, mock_streamlit):
+        st.session_state["lang"] = "en"
+        assert period_label("24h") == "24 hours"
+        assert period_label("7d") == "7 days"
+        assert period_label("30d") == "30 days"
+        assert period_label("90d") == "3 months"
+        assert period_label("1y") == "1 year"
+
+    def test_unknown_period_passthrough(self, mock_streamlit):
+        assert period_label("custom") == "custom"
+
+    def test_period_captions_format_for_all_periods(self, mock_streamlit):
+        """Every {period}-driven caption must render cleanly for each period."""
+        keys = [
+            "hq.aqi_evolution_caption", "hq.aqi_distribution_caption",
+            "hq.worst_pollutant_caption", "hq.who_exceedance_caption",
+            "drill.hourly_profile_caption", "drill.all_pollutants_caption",
+            "drill.who_thresholds_city_caption", "drill.worst_episodes_caption",
+            "drill.avg_by_hour",
+        ]
+        for lang in ("fr", "en"):
+            st.session_state["lang"] = lang
+            for key in keys:
+                for p in self.PERIODS:
+                    rendered = t(key, period=period_label(p))
+                    assert "{period}" not in rendered, f"{key} ({lang}) not formatted for {p}"
+                    assert period_label(p) in rendered, f"{key} ({lang}) missing label for {p}"
 
 
 class TestAllLiteralKeysDefined:

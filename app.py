@@ -38,7 +38,7 @@ from utils.charts import (
 )
 from utils.exports import csv_download
 from utils import filters
-from i18n import t, col, export_label
+from i18n import t, col, export_label, period_label
 from ui import page_icon
 
 # ─── Page config (must be first) ───
@@ -174,7 +174,7 @@ try:
 
     with st.container(border=True, key="panel_hq_aqi_evolution"):
         st.subheader(t("hq.aqi_evolution"))
-        st.caption(t("hq.aqi_evolution_caption"))
+        st.caption(t("hq.aqi_evolution_caption", period=period_label(period)))
         df_ts = aqi_evolution(period)
         exports["aqi_evolution"] = df_ts
         if not df_ts.empty:
@@ -217,7 +217,7 @@ try:
     with col2:
         with st.container(border=True, key="panel_hq_distribution"):
             st.subheader(t("hq.aqi_distribution"))
-            st.caption(t("hq.aqi_distribution_caption"))
+            st.caption(t("hq.aqi_distribution_caption", period=period_label(period)))
             df_dist = aqi_distribution(period)
             exports["aqi_distribution"] = df_dist
             if not df_dist.empty:
@@ -234,7 +234,7 @@ try:
     with col1:
         with st.container(border=True, key="panel_hq_worst_pollutant"):
             st.subheader(t("hq.worst_pollutant"))
-            st.caption(t("hq.worst_pollutant_caption"))
+            st.caption(t("hq.worst_pollutant_caption", period=period_label(period)))
             df_who = worst_pollutant(period)
             if not df_who.empty:
                 row = df_who.iloc[0]
@@ -251,7 +251,7 @@ try:
     with col2:
         with st.container(border=True, key="panel_hq_who_exceedance"):
             st.subheader(t("hq.who_exceedance"))
-            st.caption(t("hq.who_exceedance_caption"))
+            st.caption(t("hq.who_exceedance_caption", period=period_label(period)))
             df_exc = who_exceedance_rate(period)
             if not df_exc.empty:
                 rate = float(df_exc["exceedance_rate"].iloc[0])

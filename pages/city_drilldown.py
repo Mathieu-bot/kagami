@@ -18,7 +18,7 @@ from queries import (
 from utils.charts import style_plotly_chart
 from utils.exports import csv_download
 from utils import filters
-from i18n import t, col, export_label, translate_df
+from i18n import t, col, export_label, translate_df, period_label
 from ui import page_icon
 
 # ─── Page config (must be first) ───
@@ -98,7 +98,7 @@ try:
     # ─── Row 2: Hourly Profile ───
     with st.container(border=True, key="panel_drill_hourly"):
         st.subheader(t("drill.hourly_profile", city=city))
-        st.caption(t("drill.hourly_profile_caption"))
+        st.caption(t("drill.hourly_profile_caption", period=period_label(period)))
         df_hourly = city_hourly_profile(city, period)
         exports["hourly_profile"] = df_hourly
         if not df_hourly.empty:
@@ -107,13 +107,13 @@ try:
                          labels={"value": col("value"), "hour": t("common.hour_of_day"),
                                  "avg_aqi": col("avg_aqi"), "avg_pm25": col("avg_pm25"),
                                  "avg_o3": col("avg_o3")},
-                         title=t("drill.avg_by_hour", period=period))
+                         title=t("drill.avg_by_hour", period=period_label(period)))
             fig = style_plotly_chart(fig)
             st.plotly_chart(fig, use_container_width=True)
 
     # ─── Row 3: All Pollutants Time Series ───
     with st.expander(t("drill.all_pollutants"), expanded=False):
-        st.caption(t("drill.all_pollutants_caption"))
+        st.caption(t("drill.all_pollutants_caption", period=period_label(period)))
         df_poll = city_all_pollutants(city, period)
         exports["all_pollutants"] = df_poll
         if not df_poll.empty:
@@ -129,7 +129,7 @@ try:
     # ─── Pollutants vs WHO thresholds ───
     with st.container(border=True, key="panel_drill_who"):
         st.subheader(t("drill.who_thresholds_city", city=city))
-        st.caption(t("drill.who_thresholds_city_caption"))
+        st.caption(t("drill.who_thresholds_city_caption", period=period_label(period)))
         df_who = city_pollutant_timeseries(city, period)
         exports["pollutants_vs_who"] = df_who
         if not df_who.empty:
@@ -159,7 +159,7 @@ try:
 
     # ─── Row 4: Worst Episodes ───
     with st.expander(t("drill.worst_episodes"), expanded=False):
-        st.caption(t("drill.worst_episodes_caption"))
+        st.caption(t("drill.worst_episodes_caption", period=period_label(period)))
         df_worst = city_worst_episodes(city, period)
         exports["worst_episodes"] = df_worst
         if not df_worst.empty:

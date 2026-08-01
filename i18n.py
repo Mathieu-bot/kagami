@@ -29,6 +29,11 @@ STRINGS = {
         "common.filters": "Filtres",
         "common.pollutants": "Polluants",
         "common.period": "Période",
+        "common.period_24h": "24 heures",
+        "common.period_7d": "7 jours",
+        "common.period_30d": "30 jours",
+        "common.period_90d": "3 mois",
+        "common.period_1y": "1 an",
         "common.cities": "Villes",
         "common.select_city": "Choisir la ville",
         "common.trend_7d": "Tendance 7 jours",
@@ -96,17 +101,17 @@ STRINGS = {
         "hq.cities_in_alert_caption": "_Villes dont l'AQI a atteint le niveau d'alerte (≥ 3) aujourd'hui_",
         "hq.data_completeness_caption": "_Part des mesures attendues réellement reçues aujourd'hui_",
         "hq.days_without_alert_caption": "_Jours consécutifs sans aucun épisode d'alerte_",
-        "hq.aqi_evolution_caption": "_Moyenne journalière nationale avec tendance mobile sur 7 jours_",
+        "hq.aqi_evolution_caption": "_Moyenne journalière nationale sur {period} avec tendance mobile 7 jours_",
         "hq.aqi_map_caption": "_Dernière lecture de chaque ville, positionnée sur la carte_",
-        "hq.aqi_distribution_caption": "_Répartition des mesures par niveau d'indice sur la période_",
-        "hq.worst_pollutant_caption": "_Polluant le plus proche de sa limite OMS sur la période_",
-        "hq.who_exceedance_caption": "_Part des mesures dépassant au moins une limite OMS_",
+        "hq.aqi_distribution_caption": "_Répartition des mesures par niveau d'indice sur {period}_",
+        "hq.worst_pollutant_caption": "_Polluant le plus proche de sa limite OMS sur {period}_",
+        "hq.who_exceedance_caption": "_Part des mesures dépassant au moins une limite OMS sur {period}_",
         "hq.pipeline_health_caption": "_Fraîcheur des données et dernier enregistrement reçu_",
 
         # ── City Drill-down ──
         "drill.title": "Détail par ville",        "drill.caption": "_Analyse détaillée d'une ville spécifique_",
         "drill.current_aqi_city": "AQI actuel — {city}",        "drill.right_now": "À l'instant",
-        "drill.vs_national": "{city} vs moyenne nationale",        "drill.hourly_profile": "Profil horaire — {city}",        "drill.avg_by_hour": "Niveaux moyens de polluants par heure (derniers {period})",
+        "drill.vs_national": "{city} vs moyenne nationale",        "drill.hourly_profile": "Profil horaire — {city}",        "drill.avg_by_hour": "Niveaux moyens de polluants par heure (sur {period})",
         "drill.all_pollutants": "Tous les polluants — Série temporelle",        "drill.all_pollutants_title": "Tous les polluants — {city}",
         "drill.who_thresholds_city": "Polluants vs seuils OMS — {city}",        "drill.who_caption": "_Les lignes pointillées sont les lignes directrices OMS 24h (µg/m³)_",
         "drill.worst_episodes": "Pires épisodes",        "drill.no_bad_episodes": "Aucun mauvais épisode sur cette période !",        "drill.status_alert": "Alerte",
@@ -116,10 +121,10 @@ STRINGS = {
         # ── Drill captions (panel descriptions) ──
         "drill.current_aqi_city_caption": "_Valeur la plus récente et tendance 7 jours de la ville_",
         "drill.vs_national_caption": "_Moyennes 30 jours de la ville comparées aux moyennes nationales_",
-        "drill.hourly_profile_caption": "_Rythme moyen de la pollution selon l'heure de la journée_",
-        "drill.all_pollutants_caption": "_Évolution horaire de chaque polluant sur la période_",
-        "drill.who_thresholds_city_caption": "_Concentrations journalières avec les lignes directrices OMS 24h_",
-        "drill.worst_episodes_caption": "_Les 20 pires moments de la ville sur la période_",
+        "drill.hourly_profile_caption": "_Rythme moyen de la pollution selon l'heure de la journée (sur {period})_",
+        "drill.all_pollutants_caption": "_Évolution horaire de chaque polluant sur {period}_",
+        "drill.who_thresholds_city_caption": "_Concentrations journalières sur {period} avec les lignes directrices OMS 24h_",
+        "drill.worst_episodes_caption": "_Les 20 pires moments de la ville sur {period}_",
 
         # ── Deep Analysis ──
         "deep.title": "Analyse approfondie",        "deep.caption": "_Conforme EDA : statistiques, valeurs aberrantes, corrélations, multi-dimensionnel_",
@@ -292,6 +297,11 @@ STRINGS = {
         "common.no_cities": "No cities found in database",
         "common.no_cities_avail": "No cities available.",
         "common.export_csv": "Export data (CSV)",        "common.download_csv": "Download CSV",        "common.period": "Period",
+        "common.period_24h": "24 hours",
+        "common.period_7d": "7 days",
+        "common.period_30d": "30 days",
+        "common.period_90d": "3 months",
+        "common.period_1y": "1 year",
         "common.filters": "Filters",
         "common.pollutants": "Pollutants",
         "common.cities": "Cities",
@@ -351,17 +361,17 @@ STRINGS = {
         "hq.cities_in_alert_caption": "_Cities whose AQI reached alert level (≥ 3) today_",
         "hq.data_completeness_caption": "_Share of expected readings actually received today_",
         "hq.days_without_alert_caption": "_Consecutive days without any alert episode_",
-        "hq.aqi_evolution_caption": "_National daily average with a 7-day moving average_",
+        "hq.aqi_evolution_caption": "_National daily average over {period} with a 7-day moving average_",
         "hq.aqi_map_caption": "_Latest reading of each city, placed on the map_",
-        "hq.aqi_distribution_caption": "_Distribution of readings by index level over the period_",
-        "hq.worst_pollutant_caption": "_Pollutant closest to its WHO limit over the period_",
-        "hq.who_exceedance_caption": "_Share of readings exceeding at least one WHO limit_",
+        "hq.aqi_distribution_caption": "_Distribution of readings by index level over {period}_",
+        "hq.worst_pollutant_caption": "_Pollutant closest to its WHO limit over {period}_",
+        "hq.who_exceedance_caption": "_Share of readings exceeding at least one WHO limit over {period}_",
         "hq.pipeline_health_caption": "_Data freshness and last received record_",
 
         # ── City Drill-down ──
         "drill.title": "City Drill-down",        "drill.caption": "_Detailed analysis for a specific city_",
         "drill.current_aqi_city": "Current AQI — {city}",        "drill.right_now": "Right Now",
-        "drill.vs_national": "{city} vs National Average",        "drill.hourly_profile": "Hourly Profile — {city}",        "drill.avg_by_hour": "Average pollutant levels by hour (last {period})",
+        "drill.vs_national": "{city} vs National Average",        "drill.hourly_profile": "Hourly Profile — {city}",        "drill.avg_by_hour": "Average pollutant levels by hour (over {period})",
         "drill.all_pollutants": "All Pollutants — Time Series",        "drill.all_pollutants_title": "All Pollutants — {city}",
         "drill.who_thresholds_city": "Pollutants vs WHO Thresholds — {city}",        "drill.who_caption": "_Dashed lines are WHO 24h air quality guidelines (µg/m³)_",
         "drill.worst_episodes": "Worst Episodes",        "drill.no_bad_episodes": "No bad episodes in this period!",        "drill.status_alert": "Alert",
@@ -371,10 +381,10 @@ STRINGS = {
         # ── Drill captions (panel descriptions) ──
         "drill.current_aqi_city_caption": "_Most recent value and 7-day trend for the city_",
         "drill.vs_national_caption": "_30-day city averages compared with national averages_",
-        "drill.hourly_profile_caption": "_Average pollution rhythm by hour of day_",
-        "drill.all_pollutants_caption": "_Hourly evolution of each pollutant over the period_",
-        "drill.who_thresholds_city_caption": "_Daily concentrations with the WHO 24h guidelines_",
-        "drill.worst_episodes_caption": "_The 20 worst moments for the city over the period_",
+        "drill.hourly_profile_caption": "_Average pollution rhythm by hour of day (over {period})_",
+        "drill.all_pollutants_caption": "_Hourly evolution of each pollutant over {period}_",
+        "drill.who_thresholds_city_caption": "_Daily concentrations over {period} with the WHO 24h guidelines_",
+        "drill.worst_episodes_caption": "_The 20 worst moments for the city over {period}_",
 
         # ── Deep Analysis ──
         "deep.title": "Deep Analysis",        "deep.caption": "_EDA-compliant: statistics, outliers, correlations, multi-dimensional_",
@@ -628,6 +638,22 @@ EXPORT_LABELS = {
 def current_lang() -> str:
     """Return the active language (defaults to French)."""
     return st.session_state.get("lang", DEFAULT_LANG)
+
+
+def period_label(period: str) -> str:
+    """Translate a period selector value (``7d``, ``30d``…) into a human label.
+
+    Falls back to the raw value when the period is unknown so the UI never
+    shows a missing key.
+    """
+    labels = {
+        "24h": t("common.period_24h"),
+        "7d": t("common.period_7d"),
+        "30d": t("common.period_30d"),
+        "90d": t("common.period_90d"),
+        "1y": t("common.period_1y"),
+    }
+    return labels.get(period, period)
 
 
 def t(key: str, lang: str = None, **kwargs) -> str:
