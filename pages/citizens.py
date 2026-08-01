@@ -12,10 +12,10 @@ import pandas as pd
 from auth import init_session_state
 from sidebar import render_sidebar
 from config import DatabaseError
-from queries import control_room_status, citizen_who_exceedance, list_cities
+from queries import control_room_status, citizen_who_exceedance, best_hour_per_city, list_cities
 from utils.charts import render_city_badges
 from utils import filters
-from i18n import t, col
+from i18n import t, col, period_label, translate_df
 from ui import page_icon
 
 # ─── Page config (must be first) ───
@@ -111,5 +111,35 @@ try:
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info(t("common.no_data"))
+
+    # ─── Best hour to go out (EDA 4.12) ───
+    with st.container(border=True, key="panel_citizens_best_hour"):
+        st.subheader(t("citizens.best_hour"))
+        st.caption(t("citizens.best_hour_caption", period=period_label("30d")))
+        df_hour = best_hour_per_city("30d")
+        if selected_cities and not df_hour.empty and "city_name" in df_hour.columns:
+            df_hour = df_hour[df_hour["city_name"].isin(selected_cities)]
+        if not df_hour.empty:
+            display = df_hour.copy()
+            display["best_hour"] = display["best_hour"].apply(
+                lambda h: f"{int(h):02d}:00" if pd.notna(h) else "-")
+            st.dataframe(
+                translate_df(display[["city_name", "best_hour", "avg_aqi"]]),
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.info(t("citizens.best_hour_no_data"))
+
+    # ─── About the data (EDA section 6 limits) ───
+    with st.expander(t("citizens.data_notes"), expanded=False):
+        st.caption(t("citizens.data_notes_caption"))
+        for note in (
+            t("citizens.note_aqi_scale"),
+            t("citizens.note_co_unit"),
+            t("citizens.note_satellite"),
+            t("citizens.note_no"),
+        ):
+            st.markdown(f"- {note}")
 except DatabaseError as e:
     st.error(t("common.db_error", msg=e))
