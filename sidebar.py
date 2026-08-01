@@ -28,6 +28,59 @@ def _hide_native_nav():
     )
 
 
+_GLOBAL_CSS = """
+<style>
+[data-testid="stHorizontalBlock"] {
+    align-items: stretch;
+}
+[data-testid="stColumn"] {
+    display: flex;
+    flex-direction: column;
+}
+[data-testid="stColumn"] > div[data-testid="stVerticalBlock"] {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+[data-testid="stVerticalBlockBorderWrapper"] {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
+    flex: 1;
+}
+[data-testid="stSidebarContent"] {
+    display: flex;
+    flex-direction: column;
+}
+.sidebar-footer {
+    margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    background: #f6f8fa;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(0, 0, 0, .08);
+}
+[data-testid="stSidebar"] button[kind="primary"] {
+    background-color: #1a1a1a !important;
+    border-color: #1a1a1a !important;
+}
+[data-testid="stSidebar"] button[kind="primary"]:hover {
+    background-color: #3a3a3a !important;
+    border-color: #3a3a3a !important;
+}
+</style>
+"""
+
+
+def _inject_global_css():
+    """Inject app-wide styles once per page render."""
+    st.markdown(_GLOBAL_CSS, unsafe_allow_html=True)
+
+
 def _page_path(page_id: str) -> str:
     """Return an absolute path to the page file."""
     if page_id == "hq_overview":
@@ -57,11 +110,19 @@ def render_sidebar():
     """
     init_lang()
     _hide_native_nav()
+    _inject_global_css()
     with st.sidebar:
-        # ─── Brand ───
         st.markdown(f"## {icon(BRAND_ICON)} Kagami")
         st.caption(t("sidebar.subtitle"))
+        st.divider()
+
+        role = st.session_state.get("role", "viewer")
+        for section_key, page_ids in NAV_SECTIONS.items():
+            _nav_section(section_key, page_ids, role)
+
+        st.markdown('<div class="sidebar-footer">', unsafe_allow_html=True)
         lang_selector()
+        st.divider()
         if st.session_state.get("authenticated"):
             st.session_state.pop("show_login", None)
             st.caption(t("sidebar.signed_in_as", name=st.session_state.get("name", "User")))
@@ -77,12 +138,5 @@ def render_sidebar():
                 st.session_state["show_login"] = True
             if st.session_state.get("show_login"):
                 render_login_form()
-        st.divider()
-
-        # ─── Navigation (grouped by section, Material icons) ───
-        role = st.session_state.get("role", "viewer")
-        for section_key, page_ids in NAV_SECTIONS.items():
-            _nav_section(section_key, page_ids, role)
-
-        st.divider()
+        st.markdown('</div>', unsafe_allow_html=True)
         st.caption(f"{icon(FOOTER_ICON)} {t('sidebar.footer')}")
