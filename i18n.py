@@ -642,7 +642,7 @@ def t(key: str, lang: str = None, **kwargs) -> str:
     if kwargs:
         try:
             text = text.format(**kwargs)
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, ValueError):
             pass
     return text
 
