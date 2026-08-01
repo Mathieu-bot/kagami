@@ -97,6 +97,16 @@ try:
     # ─── Forecast table ───
     with st.container(border=True, key="panel_forecast_table"):
         st.subheader(t("forecast.details"))
-        st.dataframe(translate_df(forecast), use_container_width=True, hide_index=True)
+        st.dataframe(
+            translate_df(forecast),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                col("forecast_date"): st.column_config.DateColumn(col("forecast_date"), format="DD/MM/YYYY"),
+                col("forecast"): st.column_config.NumberColumn(col("forecast"), format="%.1f"),
+                col("lower"): st.column_config.NumberColumn(col("lower"), format="%.1f"),
+                col("upper"): st.column_config.NumberColumn(col("upper"), format="%.1f"),
+            },
+        )
 except DatabaseError as e:
     st.error(t("common.db_error", msg=e))

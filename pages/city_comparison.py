@@ -172,6 +172,10 @@ try:
                     translate_df(df_current.reset_index(drop=True)),
                     use_container_width=True,
                     hide_index=True,
+                    column_config={
+                        col("current_aqi"): st.column_config.NumberColumn(
+                            col("current_aqi"), format="%.1f"),
+                    },
                 )
 except DatabaseError as e:
     st.error(t("common.db_error", msg=e))

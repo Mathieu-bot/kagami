@@ -116,6 +116,15 @@ try:
         st.subheader(t("alerts.recent_episodes"))
         st.caption(t("alerts.recent_episodes_caption"))
         recent = df_episodes.head(100).copy()
-        st.dataframe(translate_df(recent), use_container_width=True, hide_index=True)
+        st.dataframe(
+            translate_df(recent),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                col("full_date"): st.column_config.DateColumn(col("full_date"), format="DD/MM/YYYY"),
+                col("hour"): st.column_config.NumberColumn(col("hour"), format="%02d:00"),
+                col("aqi"): st.column_config.NumberColumn(col("aqi"), format="%.1f"),
+            },
+        )
 except DatabaseError as e:
     st.error(t("common.db_error", msg=e))
