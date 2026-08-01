@@ -232,6 +232,11 @@ STRINGS = {
         "users.password_updated": "Mot de passe de '{name}' mis à jour.",
         "users.enter_password": "Saisissez d'abord un nouveau mot de passe.",
         "users.delete": "Supprimer",        "users.deleted": "Utilisateur '{name}' supprimé.",
+        "users.cannot_delete_self": "Vous ne pouvez pas supprimer votre propre compte.",
+        "users.last_admin": "Action refusée : c'est le dernier administrateur actif.",
+        "users.confirm_delete": "Confirmer la suppression de '{name}' ? Cette action est définitive.",
+        "users.confirm_yes": "Oui, supprimer",
+        "users.confirm_no": "Annuler",
 
         # ── Data Explorer ──
         "explorer.title": "Explorateur de données",        "explorer.caption": "_Accès SQL en lecture seule à l'entrepôt NeonDB (admin)_",
@@ -482,6 +487,11 @@ STRINGS = {
         "users.password_updated": "Password of '{name}' updated.",
         "users.enter_password": "Enter a new password first.",
         "users.delete": "Delete",        "users.deleted": "User '{name}' deleted.",
+        "users.cannot_delete_self": "You cannot delete your own account.",
+        "users.last_admin": "Not allowed: this is the last active admin.",
+        "users.confirm_delete": "Delete '{name}'? This cannot be undone.",
+        "users.confirm_yes": "Yes, delete",
+        "users.confirm_no": "Cancel",
 
         # ── Data Explorer ──
         "explorer.title": "Data Explorer",        "explorer.caption": "_Read-only SQL access to the NeonDB warehouse (admin)_",

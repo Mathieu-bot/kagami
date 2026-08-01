@@ -150,6 +150,32 @@ def test_hq_overview_handles_db_error(run_page, mock_query):
     st.error.assert_called_once()
 
 
+def test_last_active_admin_guard(run_page):
+    """A sole active admin cannot be demoted/deactivated/deleted."""
+    import sys
+
+    run_page("user_management")
+    last_admin = sys.modules["smoke_user_management"]._last_active_admin
+
+    sole_admin = [{"username": "root", "role": "admin", "active": True}]
+    assert last_admin(sole_admin[0], sole_admin) is True
+
+    admin_plus_viewer = [
+        {"username": "root", "role": "admin", "active": True},
+        {"username": "bob", "role": "viewer", "active": True},
+    ]
+    assert last_admin(admin_plus_viewer[0], admin_plus_viewer) is True
+
+    two_admins = [
+        {"username": "root", "role": "admin", "active": True},
+        {"username": "carol", "role": "admin", "active": True},
+    ]
+    assert last_admin(two_admins[0], two_admins) is False
+
+    inactive_sole_admin = [{"username": "root", "role": "admin", "active": False}]
+    assert last_admin(inactive_sole_admin[0], inactive_sole_admin) is False
+
+
 def test_city_comparison_ab_mode_renders(run_page):
     """C1: the A/B head-to-head branch (radio '2cities') must render.
 

@@ -40,6 +40,14 @@ def _role_display(role: str) -> str:
     return t("auth.role_admin") if role == "admin" else t("auth.role_viewer")
 
 
+def _last_active_admin(user: dict, users: list) -> bool:
+    """True if ``user`` is the only active admin (cannot be demoted/deleted)."""
+    if user["role"] != "admin" or not user["active"]:
+        return False
+    active_admins = [u for u in users if u["role"] == "admin" and u["active"]]
+    return len(active_admins) == 1
+
+
 # ─── Create user ───
 with st.expander(t("users.create"), expanded=True):
     with st.form("create_user_form"):
@@ -104,6 +112,8 @@ else:
         )
 
     for user in users:
+        is_self = user["username"] == st.session_state.get("username")
+        last_admin = _last_active_admin(user, users)
         with st.expander(f"{user['username']} — {_role_display(user['role'])}"):
             c1, c2 = st.columns(2)
             with c1:
@@ -114,18 +124,24 @@ else:
                     format_func=_role_display,
                 )
                 if st.button(t("users.update_role"), key=f"btn_role_{user['username']}"):
-                    update_role(user["username"], new_role)
-                    st.success(t("users.role_updated", name=user["username"], role=_role_display(new_role)))
-                    st.rerun()
+                    if last_admin and new_role != "admin":
+                        st.error(t("users.last_admin"))
+                    else:
+                        update_role(user["username"], new_role)
+                        st.success(t("users.role_updated", name=user["username"], role=_role_display(new_role)))
+                        st.rerun()
             with c2:
                 new_active = st.checkbox(
                     t("users.active"), value=bool(user["active"]),
                     key=f"active_{user['username']}",
                 )
                 if st.button(t("users.toggle_active"), key=f"btn_active_{user['username']}"):
-                    toggle_active(user["username"], new_active)
-                    st.success(t("users.toggled", name=user["username"], active=new_active))
-                    st.rerun()
+                    if last_admin and not new_active:
+                        st.error(t("users.last_admin"))
+                    else:
+                        toggle_active(user["username"], new_active)
+                        st.success(t("users.toggled", name=user["username"], active=new_active))
+                        st.rerun()
 
             pwd = st.text_input(
                 t("users.new_password"), type="password", key=f"pwd_{user['username']}",
@@ -140,6 +156,21 @@ else:
                         st.warning(t("users.enter_password"))
             with c4:
                 if st.button(t("users.delete"), key=f"btn_del_{user['username']}"):
-                    delete_user(user["username"])
-                    st.success(t("users.deleted", name=user["username"]))
-                    st.rerun()
+                    if is_self:
+                        st.error(t("users.cannot_delete_self"))
+                    elif last_admin:
+                        st.error(t("users.last_admin"))
+                    else:
+                        st.session_state[f"confirm_del_{user['username']}"] = True
+                        st.rerun()
+                if st.session_state.get(f"confirm_del_{user['username']}"):
+                    st.warning(t("users.confirm_delete", name=user["username"]))
+                    d1, d2 = st.columns(2)
+                    if d1.button(t("users.confirm_yes"), key=f"yes_del_{user['username']}"):
+                        delete_user(user["username"])
+                        st.session_state.pop(f"confirm_del_{user['username']}", None)
+                        st.success(t("users.deleted", name=user["username"]))
+                        st.rerun()
+                    if d2.button(t("users.confirm_no"), key=f"no_del_{user['username']}"):
+                        st.session_state.pop(f"confirm_del_{user['username']}", None)
+                        st.rerun()
