@@ -130,14 +130,7 @@ try:
         filters.cities_multiselect(city_options, key="hq_cities")
     selected_cities = filters.selected("hq_cities")
 
-    # ─── Executive summary (auto-generated) ───
-    with st.container(border=True):
-        render_executive_summary(period, selected_cities)
-
-    # ─── Row 1: Key Metrics ───
-    col1, col2, col3, col4 = st.columns(4)
-
-    # Panel 1.1 — AQI Today
+    col1, col2 = st.columns(2)
     with col1:
         df_aqi = aqi_today()
         df_yest = aqi_yesterday()
@@ -158,7 +151,6 @@ try:
                 fig.update_traces(line=dict(color="#1E88E5", width=2))
                 st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    # Panel 1.2 — Cities in Alert
     with col2:
         df_alert = cities_in_alert()
         alert_count = int(df_alert["alert_count"].iloc[0]) if not df_alert.empty else 0
@@ -166,7 +158,7 @@ try:
             st.metric(t("hq.cities_in_alert"), alert_count)
             st.caption(t("hq.cities_in_alert_caption"))
 
-    # Panel 1.4 — Data Completeness
+    col3, col4 = st.columns(2)
     with col3:
         df_comp = data_completeness()
         comp = df_comp["completeness"].iloc[0] if not df_comp.empty else 0
@@ -174,7 +166,6 @@ try:
             st.metric(t("hq.data_completeness"), f"{comp}%")
             st.caption(t("hq.data_completeness_caption"))
 
-    # Panel 1.5 — Days Without Alert
     with col4:
         df_days = days_without_alert()
         days = int(df_days["days_without_alert"].iloc[0]) if not df_days.empty else 0
@@ -182,29 +173,24 @@ try:
             st.metric(t("hq.days_without_alert"), days)
             st.caption(t("hq.days_without_alert_caption"))
 
-    # ─── Row 2: Time Series + Map ───
+    with st.container(border=True):
+        st.subheader(t("hq.aqi_evolution"))
+        st.caption(t("hq.aqi_evolution_caption"))
+        df_ts = aqi_evolution(period)
+        exports["aqi_evolution"] = df_ts
+        if not df_ts.empty:
+            fig = px.line(df_ts, x="full_date", y=["daily_avg", "trend"],
+                          labels={"value": col("aqi"), "variable": t("hq.measure"),
+                                  "full_date": col("full_date"),
+                                  "daily_avg": col("daily_avg"), "trend": col("trend")})
+            fig.data[1].update(line=dict(color="orange", width=3))
+            rename_traces(fig, {"daily_avg": col("daily_avg"), "trend": col("trend")})
+            fig = style_plotly_chart(fig)
+            set_hover_template(fig)
+            st.plotly_chart(fig, use_container_width=True)
+
     col1, col2 = st.columns([3, 2])
-
-    # Panel 1.7 — AQI Evolution
     with col1:
-        with st.container(border=True):
-            st.subheader(t("hq.aqi_evolution"))
-            st.caption(t("hq.aqi_evolution_caption"))
-            df_ts = aqi_evolution(period)
-            exports["aqi_evolution"] = df_ts
-            if not df_ts.empty:
-                fig = px.line(df_ts, x="full_date", y=["daily_avg", "trend"],
-                              labels={"value": col("aqi"), "variable": t("hq.measure"),
-                                      "full_date": col("full_date"),
-                                      "daily_avg": col("daily_avg"), "trend": col("trend")})
-                fig.data[1].update(line=dict(color="orange", width=3))
-                rename_traces(fig, {"daily_avg": col("daily_avg"), "trend": col("trend")})
-                fig = style_plotly_chart(fig)
-                set_hover_template(fig)
-                st.plotly_chart(fig, use_container_width=True)
-
-    # Panel 1.8 — Air Quality Map
-    with col2:
         with st.container(border=True):
             st.subheader(t("hq.aqi_map"))
             st.caption(t("hq.aqi_map_caption"))
@@ -226,11 +212,7 @@ try:
                 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
                 st.plotly_chart(fig, use_container_width=True)
 
-    # ─── Row 3: Distribution + WHO ───
-    col1, col2 = st.columns(2)
-
-    # Panel 1.9 — AQI Distribution
-    with col1:
+    with col2:
         with st.container(border=True):
             st.subheader(t("hq.aqi_distribution"))
             st.caption(t("hq.aqi_distribution_caption"))
@@ -246,8 +228,8 @@ try:
                 fig = style_plotly_chart(fig)
                 st.plotly_chart(fig, use_container_width=True)
 
-    # Panel 1.3 — Worst Pollutant
-    with col2:
+    col1, col2 = st.columns(2)
+    with col1:
         with st.container(border=True):
             st.subheader(t("hq.worst_pollutant"))
             st.caption(t("hq.worst_pollutant_caption"))
@@ -264,11 +246,7 @@ try:
             else:
                 st.info(t("common.no_data"))
 
-    # ─── Row 4: WHO Exceedance + Pipeline ───
-    col1, col2 = st.columns(2)
-
-    # Panel 1.6 — WHO Exceedance Rate
-    with col1:
+    with col2:
         with st.container(border=True):
             st.subheader(t("hq.who_exceedance"))
             st.caption(t("hq.who_exceedance_caption"))
@@ -279,21 +257,21 @@ try:
                 st.metric(t("hq.readings_exceeding"), f"{rate}%")
                 st.progress(min(rate, 100) / 100)
 
-    # Panel 1.10 — Pipeline Health
-    with col2:
-        with st.container(border=True):
-            st.subheader(t("hq.pipeline_health"))
-            st.caption(t("hq.pipeline_health_caption"))
-            df_status = pipeline_status()
-            df_last = last_ingestion()
-            if not df_status.empty:
-                row = df_status.iloc[0]
-                emoji, label = pipeline_status_label(row["status"])
-                st.metric(col("status"), f"{emoji} {label}")
-            if not df_last.empty:
-                st.caption(t("common.last_record", ts=df_last["last_record"].iloc[0]))
+    with st.container(border=True):
+        st.subheader(t("hq.pipeline_health"))
+        st.caption(t("hq.pipeline_health_caption"))
+        df_status = pipeline_status()
+        df_last = last_ingestion()
+        if not df_status.empty:
+            row = df_status.iloc[0]
+            emoji, label = pipeline_status_label(row["status"])
+            st.metric(col("status"), f"{emoji} {label}")
+        if not df_last.empty:
+            st.caption(t("common.last_record", ts=df_last["last_record"].iloc[0]))
 
-    # ─── Exports ───
+    with st.container(border=True):
+        render_executive_summary(period, selected_cities)
+
     with st.expander(t("common.export_csv"), expanded=False):
         for key, df in exports.items():
             csv_download(df, export_label(key), f"{key}.csv")
